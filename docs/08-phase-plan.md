@@ -18,11 +18,11 @@ Milestones: **M1** first end-to-end verified action (end P1.2) · **M2** OSS lau
 
 | ID | Task | Owner | Done when |
 | --- | --- | --- | --- |
-| P0.1 | DO repo: `git init`, `.gitignore` (.env, .fernet_key, .oauth_pkce.json, _ref-*, node_modules, .venv), commit, push to private GitHub | Founder (Claude can run it) | DO is on GitHub |
-| P0.2 | ATTEST repo: first commit, private remote | Founder | pushed |
+| P0.1 | DO repo: `git init`, `.gitignore` (.env, .fernet_key, .oauth_pkce.json, _ref-*, node_modules, .venv), commit, push to private GitHub | Claude | **Done 2026-09-12** — `dev-pratapk/DO`, commit `df85d52`, 1,642 files, secrets and `_ref-*` excluded |
+| P0.2 | ATTEST repo: first commit, private remote | Claude | **Done 2026-09-12** — `dev-pratapk/ATTEST` |
 | P0.3 | Confirm locked decisions (07): name, wrapper model, Python-first, Gmail/Slack/HubSpot first | Founder | 07 updated |
 | P0.4 | GitHub org, domain, test Slack workspace, test Gmail/HubSpot accounts | Founder | credentials in a local `.env` |
-| P0.5 | Claude: read DO `execution/policy.py`, `execution/actions.py` (VERIFY_WITH), `connectors/registry.py`, `connectors/capabilities.py`, `schema.sql` ledger/permission tables end to end; write extraction notes | Claude | `docs/notes/do-extraction.md` |
+| P0.5 | Claude: read DO `app/brain/execution/policy.py`, `app/brain/execution/actions.py` (ref resolver), `app/brain/connectors/providers/template.py` (VERIFY_WITH, `_auto_pair`, verb classifier), `app/brain/connectors/providers/google.py` (`verify()`), `connectors/registry.py`, `connectors/capabilities.py`, `schema.sql`; DeerFlow receipt middleware; write extraction notes | Claude | **Done 2026-09-12** — [notes/do-extraction.md](./notes/do-extraction.md) |
 
 Exit: repos safe, decisions locked, source material mapped.
 
@@ -45,9 +45,9 @@ tests/
 | ID | Task | Source | Done when |
 | --- | --- | --- | --- |
 | P1.1.1 | `ActionDescriptor` (pydantic): system, verb, target, params, params_hash, actor, agent, run_id, result | 03 §1 | model + tests |
-| P1.1.2 | Verb taxonomy + detection: MCP tool-name patterns, REST URL patterns, SDK call names, heuristics; unknown ⇒ `write` | DO `VERB_ALIAS`, `WRITE_VERBS`, registry `systems()` | ≥ 40 pattern tests incl. unknown app |
-| P1.1.3 | Policy engine: YAML rules (`match` on descriptor fields, `decision`, `approvers`) + built-in R0–R4 (org rule, acting-on-other's-connection, recipient legitimacy internal/known/unknown, placeholder hold, risk-tier ⇒ confirm) | DO `policy.py` | `PolicyResult{decision, risk_tier, requires_confirm, allow, reasons}`; tests for every rule |
-| P1.1.4 | Local ledger: SQLite, append-only, `prev_hash`/`hash` chain, `verify_chain()` | DO `ledger_event` + DeerFlow receipt ids | tamper test (edit a row ⇒ chain breaks) |
+| P1.1.2 | Verb taxonomy + detection: MCP tool-name patterns, REST URL patterns, SDK call names, heuristics; unknown ⇒ `write` (DO defaults unknown to `update` — change it) | DO `template.py` `VERB_MAP`, `_verb`, `_risk`, `RISK_BY_VERB`, `VERB_OVERRIDES`/`RISK_OVERRIDES`; `capabilities.py` `WRITE_VERBS`; `registry.py` `SYSTEM_LABELS`. DO tokenises hyphenated names only — add snake_case, dotted SDK paths, and `METHOD + URL` | ≥ 40 pattern tests incl. unknown app |
+| P1.1.3 | Policy engine: YAML rules (`match` on descriptor fields, `decision`, `approvers`) + built-in R0–R4 (org rule, acting-on-other's-connection, recipient legitimacy internal/known/unknown, placeholder hold, risk-tier ⇒ confirm). R2 sets `target_class` on the descriptor; the unknown-external send outcome comes from YAML (default `ask`), not hard-coded Refuse as in DO. Collapse DO's `Act + requires_confirm` and `Ask` into `ask`, keeping the hold reason | DO `policy.py` with three injected callables (`org_rule`, `org_domain`, `is_known_domain`) | `PolicyResult{decision, risk_tier, reasons, target_class}`; tests for every rule |
+| P1.1.4 | Local ledger: SQLite, append-only, `prev_hash`/`hash` chain, `verify_chain()`. New code — DO's `ledger_event` has no chain | row shape from DO `action_run`; `params_hash`/`result_hash` from DeerFlow `make_tool_receipt` (sorted-key JSON ⇒ sha256) | tamper test (edit a row ⇒ chain breaks) |
 | P1.1.5 | `@attest.action(system=, verb=, risk=, verify=)` decorator + `Attest()` client; sync + async | — | decorated function runs decide → (console gate) → execute → verify → ledger |
 | P1.1.6 | Verification ladder L0/L1: `attested-only`, `acknowledged` (result has id/status); `verify=` custom ⇒ L2 | 03 §4 | levels recorded |
 | P1.1.7 | Console gate (y/n) for local use | — | works without cloud |
@@ -59,14 +59,14 @@ Exit P1.1: `pip install -e .`; any function can be attested; ledger chain verifi
 
 | ID | Task | Source | Done when |
 | --- | --- | --- | --- |
-| P1.2.1 | Read-back driver interface: `ReadBack(system, verb) -> (fetch(result) , compare(intent, fetched) -> MatchReport)` | DO `VERIFY_WITH` shape | interface + fake driver tests |
-| P1.2.2 | **Convention driver**: create/update-X ⇒ get-X using returned id (REST + SDK) | DO "by convention for every family" | works on the unknown-app demo ⇒ L3 |
-| P1.2.3 | **Gmail recipe**: send/reply ⇒ `messages.get` (SENT label, to, subject); label/archive ⇒ label check | DO Google deep adapter | live test with test account |
-| P1.2.4 | **Slack recipe**: chat.postMessage ⇒ `chat.getPermalink` / `conversations.history`; create channel ⇒ `conversations.info` | DO Slack pairs | live test |
-| P1.2.5 | **HubSpot recipe**: create/update contact/deal/company ⇒ `objects.get` field compare | DO HubSpot pairs | live test |
+| P1.2.1 | Read-back driver interface: `ReadBack(system, verb) -> (fetch(result, params), compare(intent, fetched) -> MatchReport)`. Must distinguish existence-only recipes (DO's 65 pairs) from field-comparing ones (DO's Google `verify()`); existence-only is not silently `verified` | DO `template.py` `VERIFY_WITH` + `actions.py` `_ref`/`_dig`/`_verify_with`; `google.py` `verify()` | interface + fake driver tests |
+| P1.2.2 | **Convention driver**: create/update-X ⇒ get-X using returned id (REST + SDK) | DO `template.py` `_auto_pair` (lift verbatim; generalise to `POST /x` ⇒ `GET /x/{id}`) | works on the unknown-app demo ⇒ L3 |
+| P1.2.3 | **Gmail recipe**: send/reply ⇒ `messages.get` (SENT label, first recipient ⊂ To, reply threadId); draft ⇒ `drafts.get`; label/archive ⇒ label set check | DO `google.py` `GoogleConnector.verify()` — imperative, field-comparing; port as a `Recipe` with comparators | live test with test account |
+| P1.2.4 | **Slack recipe**: chat.postMessage ⇒ `conversations.history(channel, latest=ts, inclusive, limit=1)` with text/channel compare; create channel ⇒ `conversations.info` | DO has 2 existence-only pairs that run through the Nango proxy — direct-SDK read-back and field compare are **new** | live test |
+| P1.2.5 | **HubSpot recipe**: create/update contact/deal/company ⇒ `objects.<type>.basic_api.get_by_id(properties=…)` field compare | DO has 3 create-only existence pairs via Nango. **Update read-back and field compare are new**; the convention driver can derive update ⇒ get | live test |
 | P1.2.6 | Pass-through auth: SDK reuses the caller's client/token for read-back; nothing leaves the process | 03 §5 | no network to cloud in tests |
-| P1.2.7 | `unverified` outcome: read-back contradicts result ⇒ level `unverified`, loud log, ledger flag | DeerFlow UNVERIFIED discipline | mismatch test |
-| P1.2.8 | **LangGraph adapter**: `attest.langgraph.wrap(graph)` wraps every tool node; sync mode first | — | example agent |
+| P1.2.7 | `unverified` outcome: read-back **contradicts** result ⇒ level `unverified`, loud log, ledger flag. Fetch error or unresolvable ref ⇒ `acknowledged` with error evidence, never `unverified` (DO conflates these) | DO `actions.py` "read-back verification did not confirm it" summary; DeerFlow `render_citation_verdict` UNVERIFIED vocabulary | mismatch test + fetch-error test |
+| P1.2.8 | **LangGraph adapter**: `attest.langgraph.wrap(graph)` wraps every tool node; sync mode first. Must be the outermost tool-call layer so short-circuiting middlewares cannot gap the ledger | DeerFlow `ToolReceiptMiddleware.wrap_tool_call` / `awrap_tool_call` pattern | example agent |
 | P1.2.9 | **Demo 2 (M1)**: LangGraph agent sends Gmail + updates HubSpot ⇒ two `verified` entries with evidence ids | — | recorded run + screenshots |
 
 Exit P1.2 (**M1**): first real verified actions end to end, local only.
@@ -76,11 +76,11 @@ Exit P1.2 (**M1**): first real verified actions end to end, local only.
 | ID | Task | Source | Done when |
 | --- | --- | --- | --- |
 | P1.3.1 | Gate abstraction: `ConfirmRequest{action_id, descriptor, reasons, channel, status, resume_token}`; modes sync-block / async-interrupt / pending | 03 §6 | unit tests |
-| P1.3.2 | **Slack app** (Bolt): interactive card approve / reject / edit-params; identity of approver recorded | DeerFlow IM channel pattern | live approve in test workspace |
+| P1.3.2 | **Slack app** (Bolt): interactive card approve / reject / edit-params; identity of approver recorded | new code (DeerFlow's IM channels are app-specific, nothing reusable) | live approve in test workspace |
 | P1.3.3 | Minimal **web confirm inbox** (served by SDK locally, later cloud) | — | approve from browser |
 | P1.3.4 | Async interrupt: LangGraph `interrupt()` integration; resume with token | — | agent pauses and resumes |
 | P1.3.5 | **OpenAI Agents SDK adapter** (`function_tool` wrapper + HITL hook) | — | example |
-| P1.3.6 | **MCP proxy** (`attest-mcp --upstream …`): intercept `tools/call`, normalize by tool name, decide/gate/verify (MCP tool-pair read-back), return `pending_confirmation` + `attest_resume` tool | DeerFlow MCP client | works with a Gmail MCP server + Claude Code |
+| P1.3.6 | **MCP proxy** (`attest-mcp --upstream …`): intercept `tools/call`, normalize by tool name, decide/gate/verify (MCP tool-pair read-back), return `pending_confirmation` + `attest_resume` tool | new code (DEER has an MCP *client*, not a proxy) | works with a Gmail MCP server + Claude Code |
 | P1.3.7 | Webhook confirm (`POST /confirm`) for custom UIs | — | curl test |
 
 Exit P1.3: every entry point except HTTP gateway works; approvals from Slack.
@@ -89,7 +89,7 @@ Exit P1.3: every entry point except HTTP gateway works; approvals from Slack.
 
 | ID | Task | Source | Done when |
 | --- | --- | --- | --- |
-| P1.4.1 | Cloud API (FastAPI + Postgres): orgs/users/agents/API keys; `POST /v1/attest` (ledger sink), `GET /v1/ledger`, `POST /v1/decide` (policy sync), confirm endpoints | DO Better Auth orgs, schema | deployed (Docker Compose) |
+| P1.4.1 | Cloud API (FastAPI + Postgres): orgs/users/agents/API keys; `POST /v1/attest` (ledger sink), `GET /v1/ledger`, `POST /v1/decide` (policy sync), confirm endpoints. Sink must store `params_hash` + allow-listed preview — DO's `ActionOutcome.to_dict()` exposes full params | DO `schema.sql` `action_run`, `permission`; Better Auth lives in DO `app/web` (unreviewed; auth provider still open in 07) | deployed (Docker Compose) |
 | P1.4.2 | Multi-tenant scoping on every query; hash chain per org; export JSON/CSV | 04 data model | tests |
 | P1.4.3 | Dashboard (Next.js): ledger table + drill-down (decision trail, verification evidence), confirm inbox, agents/keys | — | usable |
 | P1.4.4 | SDK ⇄ cloud: ledger sink, policy sync, Slack confirms routed via cloud | — | end-to-end with cloud on |
@@ -150,7 +150,7 @@ Exit: any language covered; recipe long tail growing automatically; enterprise-r
 
 | Phase | Depends on | Main risk | Mitigation |
 | --- | --- | --- | --- |
-| P1.1 | P0.5 extraction notes | over-designing the descriptor | ship minimal fields; extend via `extra` |
+| P1.1 | P0.5 extraction notes (done — [notes/do-extraction.md](./notes/do-extraction.md) §8 lists the exact line ranges to copy) | over-designing the descriptor | ship minimal fields; extend via `extra` |
 | P1.2 | test Gmail/Slack/HubSpot accounts (P0.4) | vendor API quirks in read-back | field-level match reports; tolerate eventual consistency with retry window |
 | P1.3 | Slack app registration (founder) | framework pause semantics differ | three explicit modes; test each adapter with a pause |
 | P1.4 | domain, hosting (founder) | launch before quality | test gate is a hard exit criterion |
