@@ -18,6 +18,11 @@ Attest is **not** an agent framework, not a connector platform, not a guardrail 
 | [07 — Decisions](./docs/07-decisions.md) | Locked decisions and open questions |
 | [08 — Phase plan](./docs/08-phase-plan.md) | Detailed phase-wise split: task IDs, deliverables, exit criteria, milestones, founder checklist |
 
+## Code
+- [attest/](./attest/) — the Python SDK (P1.1 done). Quickstart in [attest/README.md](./attest/README.md).
+- [examples/unknown_app.py](./examples/unknown_app.py) — an app Attest has never seen, end to end.
+- [docs/notes/do-extraction.md](./docs/notes/do-extraction.md) — what was lifted from DO / DeerFlow and how.
+
 ## One-line rules
 - We never execute the customer's action. Their tool executes; we observe, decide, gate, verify, record.
 - Coverage is universal (any app, any action, any framework, any language). Verification depth is layered and honest.

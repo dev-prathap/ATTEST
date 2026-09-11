@@ -55,6 +55,8 @@ tests/
 
 Exit P1.1: `pip install -e .`; any function can be attested; ledger chain verifies; unknown app works.
 
+**Status 2026-09-12: P1.1 done.** `attest/` package (descriptor · registry with MCP / URL / SDK / function-name detection · policy R0–R4 + YAML · hash-chained SQLite ledger · L0/L1/L2 ladder with read-back driver interface · console + auto gate · `@action` sync/async · API-only `attest()`), 176 tests, `examples/unknown_app.py`, CI on 3.11–3.13. See [attest/README.md](../attest/README.md).
+
 ### P1.2 (week 2) — Read-back verification + LangGraph → **M1**
 
 | ID | Task | Source | Done when |

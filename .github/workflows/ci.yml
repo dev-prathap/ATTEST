@@ -1,0 +1,15 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv venv -p ${{ matrix.python }} && uv pip install -e ".[dev]"
+      - run: .venv/bin/ruff check attest tests examples
+      - run: .venv/bin/pytest -q
+      - run: ATTEST_AUTO_APPROVE=1 .venv/bin/python examples/unknown_app.py
