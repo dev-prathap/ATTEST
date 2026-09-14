@@ -61,12 +61,12 @@ def test_wrap_tools_records_every_call(at):
     out = scripted_graph(tools, CALLS).compile().invoke({"messages": []})
     tool_msgs = [m for m in out["messages"] if isinstance(m, ToolMessage)]
     assert len(tool_msgs) == 2 and "m1" in tool_msgs[0].content
-    entries = at.ledger.entries()
-    assert [(e.descriptor["system"], e.descriptor["verb"], e.descriptor["target"]) for e in entries] == [
-        ("gmail", "send", "arun@newco.com"), ("hubspot", "update", "777")]
-    assert entries[0].decision == "ask" and entries[0].confirm.status == "approved"
-    assert entries[1].decision == "act" and entries[1].verification.level == "acknowledged"
-    assert entries[0].agent == "lg-agent" and entries[0].descriptor["extra"]["framework"] == "langgraph"
+    entries = {e.descriptor["system"]: e for e in at.ledger.entries()}  # ToolNode may run calls concurrently
+    assert {(e.descriptor["system"], e.descriptor["verb"], e.descriptor["target"]) for e in entries.values()} == {
+        ("gmail", "send", "arun@newco.com"), ("hubspot", "update", "777")}
+    assert entries["gmail"].decision == "ask" and entries["gmail"].confirm.status == "approved"
+    assert entries["hubspot"].decision == "act" and entries["hubspot"].verification.level == "acknowledged"
+    assert entries["gmail"].agent == "lg-agent" and entries["gmail"].descriptor["extra"]["framework"] == "langgraph"
 
 
 def test_wrap_graph_patches_tool_node_in_place(at):

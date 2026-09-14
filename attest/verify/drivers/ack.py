@@ -12,6 +12,20 @@ STATUS_OK = {"ok", "success", "succeeded", "sent", "created", "updated", "done",
              "delivered", "active", "confirmed"}
 
 
+def _nested_id(obj: Any, depth: int = 3) -> str | None:
+    if depth == 0 or not isinstance(obj, dict):
+        return None
+    for k in ID_KEYS:
+        if obj.get(k) not in (None, "", 0) and not isinstance(obj.get(k), (dict, list)):
+            return str(obj[k])[:120]
+    for v in obj.values():
+        if isinstance(v, dict):
+            found = _nested_id(v, depth - 1)
+            if found:
+                return found
+    return None
+
+
 def acknowledged(result: Any) -> tuple[bool, dict[str, Any]]:
     """→ (acknowledged?, evidence). Evidence holds only ids and status, never content."""
     if result is None:
@@ -38,6 +52,10 @@ def acknowledged(result: Any) -> tuple[bool, dict[str, Any]]:
         for k, v in result.items():
             if (k.endswith("_id") or k.endswith("Id")) and v not in (None, "", 0) and k not in ev:
                 ev[k] = str(v)[:120]
+        if not ev:  # GraphQL-style envelopes: {"issueCreate": {"issue": {"id": …}}}
+            nested = _nested_id(result)
+            if nested:
+                ev["id"] = nested
         return bool(ev), ev or {"detail": "response carried no id or success status"}
     status_code = getattr(result, "status_code", None) or getattr(result, "status", None)
     if isinstance(status_code, int):

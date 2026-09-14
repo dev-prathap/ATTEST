@@ -52,7 +52,7 @@ def all_recipes() -> list[Recipe]:
 
 
 def _load() -> None:
-    from attest.verify.recipes import gmail, hubspot, slack  # noqa: F401 - registration side effect
+    from attest.verify.recipes import gmail, google, hubspot, linear, m365, notion, slack  # noqa: F401
 
 
 _load()

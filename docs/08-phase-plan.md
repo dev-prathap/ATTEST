@@ -124,7 +124,7 @@ Goal: paid cloud, more recipes, more adapters, marketplaces, public launch.
 
 | ID | Component | Tasks |
 | --- | --- | --- |
-| P2.1 | Recipes | Google Calendar, Drive/Docs/Sheets, Notion, Linear, Microsoft 365 (Outlook/Teams); **OpenAPI driver** (spec ⇒ read path); **MCP tool-pair detection** |
+| P2.1 | Recipes | Google Calendar, Drive/Docs/Sheets, Notion, Linear, Microsoft 365 (Outlook/Teams); **OpenAPI driver** (spec ⇒ read path); **MCP tool-pair detection** — **done 2026-09-15**: 19 recipes (12 new: calendar event, drive file/share, docs, sheets values, notion page/database, linear issue/project/comment, outlook send (sentitems search) / event, teams message), readers for each with client / token / fetch pass-through, `OpenApiDriver` (nested paths, no-guess fallback); MCP pairs since P1.3. Live tests still need P0.4 accounts. |
 | P2.2 | Policies | Policies UI (YAML editor + validation), versioning, approver groups, per-agent overrides, retention settings |
 | P2.3 | Evidence | IETF agent-audit-trail export; **EU AI Act event-log pack**; signed export manifests; ledger checkpoints |
 | P2.4 | Billing | Stripe: Team $99 / Pro $499 / usage per verified action; plan gates; invoices |

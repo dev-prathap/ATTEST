@@ -89,7 +89,19 @@ at = Attest(readers={"gmail": gmail_service,          # googleapiclient resource
 | slack | send | `conversations.history` (or `.replies`) | ts, text, thread_ts |
 | slack | create channel | `conversations.info` | exists, name, is_private |
 | hubspot | create / update any object | `GET crm/v3/objects/{type}/{id}` | id, every intended property |
+| calendar | create / update event | `events.get` | confirmed, summary, start / end, attendees |
+| drive | create / upload / update file | `files.get` | name, mimeType, parents, not trashed |
+| drive | share | `permissions.list` | every intended email present, role |
+| docs | create / append | `documents.get` | title, appended text present |
+| sheets | create / write values | `spreadsheets.get` / `values.get` | title, every written row present |
+| notion | create / update page | `pages.retrieve` | title, status, select, text, number… properties, parent |
+| notion | create database | `databases.retrieve` | exists, title |
+| linear | create / update issue, project, comment | GraphQL `issue` / `project` / `comment` | title, priority, state, assignee, team, body |
+| outlook | send / reply | sent-items search | found, every recipient, subject |
+| outlook | create / update event | `me/events/{id}` | subject, start / end, attendees, not cancelled |
+| teams | send | channel / chat message | text |
 | *anything REST* | create / update | convention: `GET <url>/<returned id>` | id, every intended field the record carries |
+| *anything with an OpenAPI spec* | create / update | `OpenApiDriver(spec, http_get)` — spec-derived GET path, nested collections, never guesses | id, every intended field |
 
 Per action: `@at.action(..., reader=gmail_service)` or `http_get=…`. A read-back that finds the record but
 nothing to compare is `acknowledged` with `exists: true`, not `verified`.
