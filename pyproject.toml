@@ -11,10 +11,14 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+langgraph = ["langgraph>=0.2", "langchain-core>=0.3"]
 dev = [
     "pytest>=8",
     "pytest-asyncio>=0.23",
     "ruff>=0.5",
+    "langgraph>=0.2",
+    "langchain-core>=0.3",
+    "langchain>=1.0",
 ]
 
 [build-system]

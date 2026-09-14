@@ -69,11 +69,51 @@ policies:
 Match keys: `system`, `verb`, `target` (internal | known | external | none), `target_domain`, `actor`, `agent`,
 `risk`, `action` (`gmail.send`, globs allowed). Decisions: `act`, `ask`, `refuse`.
 
+## Read-back (L3) with your own credentials
+
+Give Attest the client or token the agent already holds; it reads the system of record in-process and
+compares intent with what is there. Nothing leaves your process.
+
+```python
+at = Attest(readers={"gmail": gmail_service,          # googleapiclient resource, or an OAuth token string
+                     "slack": slack_web_client,       # slack_sdk WebClient, or an xoxb token
+                     "hubspot": hubspot_client},      # hubspot Client, or a private-app token
+            http_get=lambda url, params=None: session.get(url, params=params).json())   # any REST API
+```
+
+| system | write | read-back | compares |
+| --- | --- | --- | --- |
+| gmail | send / reply | `messages.get` | SENT label, every intended recipient in To/Cc, subject, reply thread |
+| gmail | create draft | `drafts.get` | exists, recipients, subject |
+| gmail | update labels | `messages.get` | added ⊂ labels, removed ∩ labels = ∅ |
+| slack | send | `conversations.history` (or `.replies`) | ts, text, thread_ts |
+| slack | create channel | `conversations.info` | exists, name, is_private |
+| hubspot | create / update any object | `GET crm/v3/objects/{type}/{id}` | id, every intended property |
+| *anything REST* | create / update | convention: `GET <url>/<returned id>` | id, every intended field the record carries |
+
+Per action: `@at.action(..., reader=gmail_service)` or `http_get=…`. A read-back that finds the record but
+nothing to compare is `acknowledged` with `exists: true`, not `verified`.
+
+## LangGraph / LangChain
+
+```python
+from attest.adapters import langgraph as attest_lg
+
+mapping = {"send_email": {"system": "gmail", "verb": "send", "target": "to"},
+           "update_deal": {"system": "hubspot", "verb": "update", "target": "deal_id"}}
+tools = attest_lg.wrap_tools([send_email, update_deal], at, mapping=mapping)   # before building the graph
+attest_lg.wrap(graph, at, mapping=mapping)                                     # or patch an existing graph's ToolNode
+create_agent(model, tools, middleware=[attest_lg.AttestMiddleware(at, mapping=mapping)])   # langchain ≥ 1
+```
+
+Refusals and rejections come back to the model as an error ToolMessage; the ledger records them either way.
+Unmapped tools are inferred from their name. `pip install "attest[langgraph]"`.
+
 ## Verification levels
 
 | level | meaning |
 | --- | --- |
-| `verified` | read-back recipe matched (P1.2) |
+| `verified` | read-back matched: a reviewed recipe or the REST convention driver compared intent with the record |
 | `verified-custom` | your `verify=` returned true |
 | `acknowledged` | response carried an id / success — the API said yes, nothing was read back |
 | `attested-only` | recorded; nothing checkable |

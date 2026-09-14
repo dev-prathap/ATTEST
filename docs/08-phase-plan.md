@@ -73,6 +73,8 @@ Exit P1.1: `pip install -e .`; any function can be attested; ledger chain verifi
 
 Exit P1.2 (**M1**): first real verified actions end to end, local only.
 
+**Status 2026-09-15: P1.2 code done; M1 pending live credentials.** Read-back driver interface with `MatchReport`; convention driver (REST `GET <url>/<id>` + `lookup=` for SDKs); reviewed recipes for Gmail (send/reply/draft/labels, ported from DO `google.py`), Slack (send, create channel) and HubSpot (any object, create/update) with field-level compare; pass-through readers (vendor client object, bearer token, or any `fetch` callable — nothing leaves the process); `unverified` on contradiction, degrade on fetch error; LangGraph adapter (`wrap_tools`, `wrap(graph)`, `AttestMiddleware`). 230 tests against client-shaped fakes. `examples/langgraph_agent.py` (Demo 2) yields two `verified` entries with fakes and switches to real Gmail/HubSpot when `ATTEST_LIVE_*` tokens are set. `tests/live/` holds the real-account tests (skipped without tokens) — **M1 is claimed only after those pass** (needs P0.4 accounts).
+
 ### P1.3 (week 3) — Gate channels, async modes, OpenAI adapter, MCP proxy
 
 | ID | Task | Source | Done when |

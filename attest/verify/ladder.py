@@ -22,6 +22,7 @@ from typing import Any
 from attest.descriptor import ActionDescriptor
 from attest.ledger.models import VerificationRecord
 from attest.verify.drivers import ack as ack_driver
+from attest.verify.match import MatchReport
 
 log = logging.getLogger("attest.verify")
 
@@ -45,8 +46,8 @@ class ReadBackDriver:
     def fetch(self, d: ActionDescriptor, result: Any) -> Any:  # pragma: no cover - interface
         raise NotImplementedError
 
-    def compare(self, d: ActionDescriptor, fetched: Any) -> tuple[bool, dict[str, Any]]:  # pragma: no cover
-        raise NotImplementedError
+    def compare(self, d: ActionDescriptor, fetched: Any) -> MatchReport | tuple[bool, dict[str, Any]]:
+        raise NotImplementedError  # pragma: no cover
 
 
 def _now() -> datetime:
@@ -108,9 +109,20 @@ def _read_back(d: ActionDescriptor, result: Any, drivers: list[ReadBackDriver]) 
         if fetched is None:
             return _degrade(result, method, "read-back returned nothing to compare")
         try:
-            matched, evidence = drv.compare(d, fetched)
+            out = drv.compare(d, fetched)
         except Exception as e:
             return _degrade(result, method, f"compare failed: {type(e).__name__}: {e}")
+        if isinstance(out, MatchReport):
+            if not out.matched:
+                return _record(Level.UNVERIFIED, method, False, out.evidence())
+            intended = [k for k in out.fields if k != "id"] + [k for k in out.checks if not k.endswith(":exists")]
+            if not intended:
+                # the record is there but nothing intended was compared — honest rung is L1 with `exists`
+                ev = out.evidence()
+                ev["detail"] = "read-back found the record; no intended field could be compared"
+                return _record(Level.ACKNOWLEDGED, method, None, ev)
+            return _record(Level.VERIFIED, method, True, out.evidence())
+        matched, evidence = out
         return _record(Level.VERIFIED if matched else Level.UNVERIFIED, method, matched, evidence)
     return None
 

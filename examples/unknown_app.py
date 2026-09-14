@@ -4,7 +4,10 @@
 
 No recipe, no connector, no config. The call is normalized (system `someweirdcrm`, verb `create`),
 policy applies by verb, the gate asks because `create` is high risk, the customer's own code executes,
-the response id gives an `acknowledged` level, and the ledger entry is hash-linked.
+and the ledger entry is hash-linked. Verification climbs the ladder with what is available:
+  1) nothing but the response id                      ⇒ acknowledged   (L1)
+  2) a one-line custom check                          ⇒ verified-custom (L2)
+  3) `http_get=` so the convention driver can GET /v2/leads/{id} and compare fields ⇒ verified (L3)
 
 Run:   python examples/unknown_app.py            (answers y/n on the console)
        ATTEST_AUTO_APPROVE=1 python examples/unknown_app.py
@@ -35,6 +38,8 @@ def http_get(url: str) -> dict | None:
 
 # ── the customer's tool, wrapped ────────────────────────────────────────────────────────────────
 at = Attest(ledger=SqliteLedger(":memory:"), agent="lead-agent@v1", actor="ram@acme.com")
+at_l3 = Attest(ledger=at.ledger, agent="lead-agent@v1", actor="ram@acme.com",
+               http_get=lambda url, params=None: http_get(url))   # pass-through: your HTTP client, your auth
 
 
 @at.action(method="POST", url="https://api.someweirdcrm.io/v2/leads")
@@ -49,11 +54,18 @@ def create_lead_checked(name: str, email: str) -> dict:
     return http_post("https://api.someweirdcrm.io/v2/leads", {"name": name, "email": email})
 
 
+# the same tool with an HTTP getter ⇒ convention read-back GET /v2/leads/{id}, field compare ⇒ L3 `verified`
+@at_l3.action(method="POST", url="https://api.someweirdcrm.io/v2/leads")
+def create_lead_l3(name: str, email: str) -> dict:
+    return http_post("https://api.someweirdcrm.io/v2/leads", {"name": name, "email": email})
+
+
 if __name__ == "__main__":
     with at.run("demo-unknown-app"):
         try:
             print("1)", create_lead("Arun", "arun@newco.com"))
             print("2)", create_lead_checked("Priya", "priya@newco.com"))
+            print("3)", create_lead_l3("Dev", "dev@newco.com"))
         except Exception as e:  # rejected at the gate
             print("stopped:", e)
 

@@ -19,8 +19,9 @@ Attest is **not** an agent framework, not a connector platform, not a guardrail 
 | [08 — Phase plan](./docs/08-phase-plan.md) | Detailed phase-wise split: task IDs, deliverables, exit criteria, milestones, founder checklist |
 
 ## Code
-- [attest/](./attest/) — the Python SDK (P1.1 done). Quickstart in [attest/README.md](./attest/README.md).
-- [examples/unknown_app.py](./examples/unknown_app.py) — an app Attest has never seen, end to end.
+- [attest/](./attest/) — the Python SDK (P1.1 + P1.2 done). Quickstart in [attest/README.md](./attest/README.md).
+- [examples/unknown_app.py](./examples/unknown_app.py) — an app Attest has never seen, L1 → L2 → L3.
+- [examples/langgraph_agent.py](./examples/langgraph_agent.py) — LangGraph agent, Gmail + HubSpot, two `verified` entries.
 - [docs/notes/do-extraction.md](./docs/notes/do-extraction.md) — what was lifted from DO / DeerFlow and how.
 
 ## One-line rules

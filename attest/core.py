@@ -29,6 +29,8 @@ from attest.ledger.models import VerificationRecord
 from attest.policy import PolicyContext, PolicyEngine, PolicyResult
 from attest.registry import Detection, detect
 from attest.verify import ReadBackDriver, averify, verify
+from attest.verify.drivers.convention import ConventionDriver
+from attest.verify.drivers.recipe import RecipeDriver
 
 log = logging.getLogger("attest")
 
@@ -66,14 +68,29 @@ class Attest:
         agent: str | None = None,
         actor: str | None = None,
         drivers: list[ReadBackDriver] | None = None,
+        readers: dict[str, Any] | None = None,
+        http_get: Any = None,
         ledger_path: str | None = None,
     ):
+        """`readers` = {"gmail": service_or_token, "slack": client_or_token, "hubspot": client_or_token} — the
+        agent's own credentials, used in-process for L3 read-back. `http_get(url, params)` (or a bearer token)
+        enables the convention driver for any REST API. `drivers` adds custom read-back drivers first."""
         self.ledger = ledger or SqliteLedger(ledger_path or os.environ.get("ATTEST_LEDGER", ".attest/ledger.sqlite"))
         self.policy = policy or PolicyEngine.from_env(PolicyContext())
         self.gate = gate or gate_from_env()
         self.agent = agent or os.environ.get("ATTEST_AGENT")
         self.actor = actor or os.environ.get("ATTEST_ACTOR")
-        self.drivers = drivers or []
+        self.recipes = RecipeDriver(readers)
+        self.convention = ConventionDriver(http_get) if http_get is not None else None
+        self.drivers = list(drivers or [])
+
+    def _drivers(self, readers: dict[str, Any] | None = None, http_get: Any = None) -> list[ReadBackDriver]:
+        out: list[ReadBackDriver] = list(self.drivers)
+        out.append(self.recipes.with_readers(readers))
+        conv = ConventionDriver(http_get) if http_get is not None else self.convention
+        if conv is not None:
+            out.append(conv)
+        return out
 
     # ── context ───────────────────────────────────────────────────────────
     @contextlib.contextmanager
@@ -108,6 +125,9 @@ class Attest:
         sdk_path: str | None = None,
         params: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
         name: str | None = None,
+        reader: Any = None,
+        readers: dict[str, Any] | None = None,
+        http_get: Any = None,
     ) -> Callable:
         """Wrap one function. Everything is optional: with nothing given, system/verb are inferred from the
         function name (`send_email` ⇒ unknown/send). `target` may be a param name, a literal, or a callable
@@ -118,6 +138,9 @@ class Attest:
             det_kw = dict(system=system, verb=verb, tool_name=tool_name, method=method, url=url, sdk_path=sdk_path,
                           function_name=name or func.__name__)
             sig = inspect.signature(func)
+            extra = {k: v for k, v in (("method", method), ("url", url), ("tool_name", tool_name),
+                                       ("sdk_path", sdk_path)) if v}
+            local_readers = dict(readers or {})
 
             def build(args: tuple, kwargs: dict) -> tuple[ActionDescriptor, Detection, dict[str, Any]]:
                 bound = sig.bind_partial(*args, **kwargs)
@@ -128,15 +151,22 @@ class Attest:
                 det = detect(**det_kw)
                 d = ActionDescriptor(system=det.system, verb=det.verb, target=_target(target, raw, det),
                                      params=_jsonable(recorded), actor=_current_actor.get() or self.actor,
-                                     agent=self.agent, run_id=_current_run.get(), risk=risk, source=det.source)
+                                     agent=self.agent, run_id=_current_run.get(), risk=risk, source=det.source,
+                                     extra=extra)
                 return d, det, raw
+
+            def rb() -> dict[str, Any]:
+                if reader is not None:
+                    return {**local_readers, (system or "unknown"): reader}
+                return local_readers
 
             if inspect.iscoroutinefunction(func):
                 @functools.wraps(func)
                 async def awrapper(*args: Any, **kwargs: Any) -> Any:
                     d, det, raw = build(args, kwargs)
                     receipt = await self.arun_action(d, lambda p: func(**_rebind(sig, raw, p)),
-                                                     recognised=det.recognised, verify_fn=verify)
+                                                     recognised=det.recognised, verify_fn=verify,
+                                                     readers=rb(), http_get=http_get)
                     return receipt.result
                 awrapper.attest = self  # type: ignore[attr-defined]
                 return awrapper
@@ -145,7 +175,7 @@ class Attest:
             def wrapper(*args: Any, **kwargs: Any) -> Any:
                 d, det, raw = build(args, kwargs)
                 receipt = self.run_action(d, lambda p: func(**_rebind(sig, raw, p)), recognised=det.recognised,
-                                          verify_fn=verify)
+                                          verify_fn=verify, readers=rb(), http_get=http_get)
                 return receipt.result
             wrapper.attest = self  # type: ignore[attr-defined]
             return wrapper
@@ -154,7 +184,8 @@ class Attest:
 
     # ── the pipeline ──────────────────────────────────────────────────────
     def run_action(self, d: ActionDescriptor, execute: Callable[[dict[str, Any]], Any], *, recognised: bool = True,
-                   verify_fn: Callable | None = None) -> ActionReceipt:
+                   verify_fn: Callable | None = None, readers: dict[str, Any] | None = None,
+                   http_get: Any = None) -> ActionReceipt:
         pol = self.policy.evaluate(d, recognised=recognised)
         d.target_class = pol.target_class  # type: ignore[assignment]
         entry = self._entry(d, pol)
@@ -167,7 +198,8 @@ class Attest:
             d, entry = self._after_confirm(d, entry, decision)
         result, rec = self._execute(d, execute)
         entry.execution = rec
-        entry.verification = (verify(d.with_result(result), result, custom=verify_fn, drivers=self.drivers)
+        entry.verification = (verify(d.with_result(result), result, custom=verify_fn,
+                                     drivers=self._drivers(readers, http_get))
                               if rec.status == "done" else VerificationRecord(level="attested-only", method="none",
                                                                               evidence={"detail": "execution failed"}))
         self.ledger.append(entry)
@@ -176,7 +208,8 @@ class Attest:
         return ActionReceipt(entry, result, d, pol, decision)
 
     async def arun_action(self, d: ActionDescriptor, execute: Callable[[dict[str, Any]], Any], *,
-                          recognised: bool = True, verify_fn: Callable | None = None) -> ActionReceipt:
+                          recognised: bool = True, verify_fn: Callable | None = None,
+                          readers: dict[str, Any] | None = None, http_get: Any = None) -> ActionReceipt:
         pol = self.policy.evaluate(d, recognised=recognised)
         d.target_class = pol.target_class  # type: ignore[assignment]
         entry = self._entry(d, pol)
@@ -189,7 +222,8 @@ class Attest:
             d, entry = self._after_confirm(d, entry, decision)
         result, rec = await self._aexecute(d, execute)
         entry.execution = rec
-        entry.verification = (await averify(d.with_result(result), result, custom=verify_fn, drivers=self.drivers)
+        entry.verification = (await averify(d.with_result(result), result, custom=verify_fn,
+                                            drivers=self._drivers(readers, http_get))
                               if rec.status == "done" else VerificationRecord(level="attested-only", method="none",
                                                                               evidence={"detail": "execution failed"}))
         await asyncio.to_thread(self.ledger.append, entry)
