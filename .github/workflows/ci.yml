@@ -14,3 +14,4 @@ jobs:
       - run: .venv/bin/pytest -q
       - run: ATTEST_AUTO_APPROVE=1 .venv/bin/python examples/unknown_app.py
       - run: ATTEST_AUTO_APPROVE=1 .venv/bin/python examples/langgraph_agent.py
+      - run: .venv/bin/attest --help && .venv/bin/attest-mcp --help

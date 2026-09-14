@@ -82,6 +82,7 @@ class LedgerEntry(BaseModel):
     confirm: ConfirmRecord = Field(default_factory=lambda: ConfirmRecord(status="not_required"))
     execution: ExecutionRecord | None = None
     verification: VerificationRecord = Field(default_factory=VerificationRecord)
+    resumed_from: str | None = None  # confirm request id when this entry completes an earlier `pending` one
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     sdk: str = "attest-python/0.1.0"
 

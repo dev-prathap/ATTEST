@@ -176,8 +176,12 @@ def test_middleware_wraps_tool_calls(at):
     out = agent.invoke({"messages": [("user", "go")]})
     tool_msgs = [m for m in out["messages"] if isinstance(m, ToolMessage)]
     assert len(tool_msgs) == 2 and at.ledger.count() == 2
-    e = at.ledger.entries()[0]
-    assert e.descriptor["system"] == "gmail" and e.confirm.status == "approved" and e.verification.level == "acknowledged"
+    # create_agent may run tool calls concurrently — assert on content, not ledger order
+    by_system = {e.descriptor["system"]: e for e in at.ledger.entries()}
+    assert set(by_system) == {"gmail", "hubspot"}
+    e = by_system["gmail"]
+    assert e.confirm.status == "approved" and e.verification.level == "acknowledged"
+    assert at.ledger.verify_chain().ok
 
 
 def test_middleware_rejection_returns_error_message():

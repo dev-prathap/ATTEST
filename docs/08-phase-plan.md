@@ -89,6 +89,8 @@ Exit P1.2 (**M1**): first real verified actions end to end, local only.
 
 Exit P1.3: every entry point except HTTP gateway works; approvals from Slack.
 
+**Status 2026-09-15: P1.3 code done; live Slack approval pending app registration (P0.4).** `PendingStore` (SQLite, shared with the ledger) + `StoreGate` (block / pending) with notifiers: `SlackNotifier` (Block Kit card, approve/reject buttons, approver identity, card updated with outcome; `handle_interaction` + signature check, optional `bolt_app`), `WebhookNotifier` (signed POST). `InterruptGate` for LangGraph `interrupt()` / `Command(resume=…)`, replay-safe. `Attest.resume()` / `aresume()` with edits, same-process or `execute=` cross-process; ledger rows link via `resumed_from`. Web inbox + API (`attest serve`, stdlib), `attest` CLI (ledger / verify / pending / confirm / export). OpenAI Agents SDK adapter (`FunctionTool` wrap, pending ⇒ resume token). **MCP stdio proxy** `attest-mcp` (tools/call interception, `attest_resume` tool, MCP tool-pair read-back ⇒ L3, block / pending / auto), tested against a fake MCP server as a subprocess. 273 tests. Not yet: HTTP-transport MCP upstreams (stdio only), Slack modal for edits (edits go through the inbox).
+
 ### P1.4 (week 4) — Cloud v0, dashboard, docs, launch prep → **M2**
 
 | ID | Task | Source | Done when |

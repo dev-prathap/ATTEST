@@ -15,8 +15,9 @@ from typing import Any
 from attest.core import ActionReceipt, Attest
 from attest.descriptor import ActionDescriptor
 from attest.exceptions import ActionPending, ActionRefused, ActionRejected, AttestError
-from attest.gate import AutoGate, ConfirmDecision, ConfirmRequest
+from attest.gate import AutoGate, ConfirmDecision, ConfirmRequest, StoreGate
 from attest.gate.console import ConsoleGate
+from attest.gate.store import PendingStore
 from attest.ledger import LedgerEntry, SqliteLedger
 from attest.policy import PolicyContext, PolicyEngine, PolicyResult
 from attest.registry import Detection, detect, register
@@ -53,7 +54,8 @@ def run(run_id: str | None = None, **kw):
 
 
 __all__ = ["Attest", "ActionReceipt", "ActionDescriptor", "ActionRefused", "ActionRejected", "ActionPending",
-           "AttestError", "AutoGate", "ConsoleGate", "ConfirmDecision", "ConfirmRequest", "LedgerEntry", "SqliteLedger",
+           "AttestError", "AutoGate", "ConsoleGate", "StoreGate", "PendingStore", "ConfirmDecision", "ConfirmRequest",
+           "LedgerEntry", "SqliteLedger",
            "PolicyContext", "PolicyEngine", "PolicyResult", "Detection", "detect", "register", "Level",
            "ReadBackDriver",
            "action", "attest", "run", "default", "configure", "__version__"]

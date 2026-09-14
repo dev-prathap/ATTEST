@@ -10,8 +10,14 @@ dependencies = [
     "pyyaml>=6.0",
 ]
 
+[project.scripts]
+attest = "attest.cli:main"
+attest-mcp = "attest.mcp.proxy:main"
+
 [project.optional-dependencies]
 langgraph = ["langgraph>=0.2", "langchain-core>=0.3"]
+openai = ["openai-agents>=0.1"]
+slack = ["slack_sdk>=3.20", "slack_bolt>=1.18"]
 dev = [
     "pytest>=8",
     "pytest-asyncio>=0.23",
@@ -19,6 +25,7 @@ dev = [
     "langgraph>=0.2",
     "langchain-core>=0.3",
     "langchain>=1.0",
+    "openai-agents>=0.1",
 ]
 
 [build-system]
@@ -42,3 +49,4 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["E501"]
 "examples/*" = ["E501"]
+"attest/server.py" = ["E501"]  # inline HTML/JS template

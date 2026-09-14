@@ -25,11 +25,10 @@ def tokens(name: str) -> list[str]:
 def split_system(toks: list[str], server: str | None = None) -> tuple[str, list[str]]:
     """Peel the system off the front of the token list. Tries two-token aliases first (google_calendar)."""
     if server:
-        sys_ = canonical_system(server)
-        if sys_:
-            if toks and toks[0] in (sys_, *[k for k, v in SYSTEM_ALIASES.items() if v == sys_]):
-                toks = toks[1:]
-            return sys_, toks
+        sys_ = canonical_system(server) or server.lower().replace("-", "_").replace(" ", "_")
+        if toks and toks[0] in (sys_, *[k for k, v in SYSTEM_ALIASES.items() if v == sys_]):
+            toks = toks[1:]
+        return sys_, toks
     for n in (2, 1):
         if len(toks) >= n:
             head = "_".join(toks[:n])

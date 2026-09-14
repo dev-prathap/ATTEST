@@ -109,6 +109,75 @@ create_agent(model, tools, middleware=[attest_lg.AttestMiddleware(at, mapping=ma
 Refusals and rejections come back to the model as an error ToolMessage; the ledger records them either way.
 Unmapped tools are inferred from their name. `pip install "attest[langgraph]"`.
 
+## Gate modes: Slack, web inbox, webhook, LangGraph interrupt, MCP pending
+
+One contract, several ways to pause (doc 03 §6):
+
+```python
+from attest import Attest, StoreGate, PendingStore
+from attest.gate.slack import SlackNotifier
+from attest.gate.webhook import WebhookNotifier
+
+store = PendingStore(".attest/ledger.sqlite")
+at = Attest(gate=StoreGate(store, wait=True, timeout_s=900, notifiers=[
+    SlackNotifier("xoxb-…", "#agent-approvals", inbox_url="http://localhost:8321"),   # card with Approve / Reject
+    WebhookNotifier("https://your.app/attest", secret="…", confirm_url="http://localhost:8321"),
+]))
+```
+
+| mode | gate | what happens on `ask` |
+| --- | --- | --- |
+| sync-block | `ConsoleGate()` | terminal prompt `y / n / e` |
+| sync-block | `StoreGate(wait=True, notifiers=…)` | request persisted, Slack card / webhook / inbox notified, call blocks until a human decides (or `timeout_s` ⇒ expired ⇒ rejected) |
+| pending | `StoreGate(wait=False)` | raises `ActionPending(resume_token)`; later `fn.resume(token)` / `at.resume(token)` executes once approved |
+| async-interrupt | `InterruptGate()` | LangGraph `interrupt()` with the request as payload; `Command(resume={"status": "approved"})` continues |
+
+Decisions can come from anywhere that reaches the store: the Slack buttons (`POST /slack/interact` on the inbox
+server, signature-verified), the web inbox, `POST /confirm/{id}`, or `attest confirm <id> approve --edits '{…}'`.
+Every decision records the approver's identity and channel in the ledger. Edits at confirm time change what
+runs. Cross-process resume passes `execute=`; the same process remembers it.
+
+### Web inbox + API
+
+```bash
+attest serve --port 8321      # http://127.0.0.1:8321 — approve / reject / edit pending requests
+```
+
+`GET /api/pending` · `GET /api/requests/{id}` · `POST /confirm/{id}` `{"status","approver","edits","note"}` ·
+`GET /api/ledger` · `GET /api/ledger/verify` · `POST /slack/interact`. Set `ATTEST_SERVER_TOKEN` to require a
+bearer token.
+
+### CLI
+
+```bash
+attest ledger [--limit 20] [--run RUN] [--json]     attest verify        attest export --format csv
+attest pending                                      attest confirm <id|token> approve|reject [--edits '{…}']
+```
+
+## MCP proxy (zero code)
+
+```json
+{ "mcpServers": { "gmail": { "command": "attest-mcp",
+    "args": ["--upstream", "npx -y @modelcontextprotocol/server-gmail", "--server", "gmail", "--mode", "block"] } } }
+```
+
+Every `tools/call` is normalized by tool name, decided, gated, forwarded, verified and recorded; `tools/list`
+gains `attest_resume`. Read-back uses MCP tool pairs (`create_issue` ⇒ `get_issue`) and compares fields.
+`--mode block` waits for a decision in the inbox / Slack (`--timeout`); `--mode pending` returns
+`{"status": "pending_confirmation", "resume_token"}` and the agent calls `attest_resume` after approval;
+`--mode auto` approves everything (dev). Slack / webhook via `--slack-token --slack-channel` / `--webhook`.
+
+## OpenAI Agents SDK
+
+```python
+from attest.adapters import openai_agents as attest_oa
+tools = attest_oa.wrap_tools([send_email, update_deal], at, mapping=mapping)
+agent = Agent(name="followup", tools=tools)
+```
+
+Same behaviour as LangGraph: refusals / rejections return as tool errors; with a pending gate the tool returns a
+resume token and `await attest_oa.resume(at, token)` executes after approval. `pip install "attest[openai]"`.
+
 ## Verification levels
 
 | level | meaning |
