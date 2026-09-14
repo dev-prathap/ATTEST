@@ -1,0 +1,33 @@
+site_name: Attest
+site_description: Prove what your AI agent actually did. Decide · Gate · Verify · Attest.
+docs_dir: docs/site
+site_dir: site
+theme:
+  name: material
+  features: [navigation.sections, content.code.copy, navigation.footer]
+  palette:
+    - scheme: default
+      primary: black
+      toggle: { icon: material/brightness-7, name: dark }
+    - scheme: slate
+      primary: black
+      toggle: { icon: material/brightness-4, name: light }
+markdown_extensions: [admonition, tables, pymdownx.superfences, pymdownx.details, attr_list, toc]
+nav:
+  - Home: index.md
+  - Quickstart (5 min): quickstart.md
+  - Concepts:
+      - The four steps: concepts.md
+      - Verification levels: levels.md
+      - Policy: policy.md
+  - Entry points:
+      - Decorator: entry/decorator.md
+      - LangGraph: entry/langgraph.md
+      - OpenAI Agents: entry/openai.md
+      - MCP proxy: entry/mcp.md
+      - API-only: entry/api.md
+  - Gates & confirmations: gates.md
+  - Read-back recipes: recipes.md
+  - Ledger & exports: ledger.md
+  - Attest Cloud: cloud.md
+  - CLI: cli.md

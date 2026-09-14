@@ -18,7 +18,7 @@
 
 ## Open (resolve during Phase 1)
 - Final product name and domain.
-- Cloud auth provider: keep DO's Better Auth vs. WorkOS/Clerk.
+- Cloud auth provider: keep DO's Better Auth vs. WorkOS/Clerk. *(v0 ships API keys with roles — agent / approver / admin — and no user login; the dashboard authenticates with a key. Decide before public cloud beta.)*
 - Params storage default: hash-only vs. allow-listed preview (leaning hash + preview).
 - Exact usage-pricing unit: per verified action vs. per attested action.
 - Whether the MCP proxy also serves as the HTTP gateway (single binary) in Phase 3.

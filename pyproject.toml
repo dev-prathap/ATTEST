@@ -50,3 +50,5 @@ select = ["E", "F", "I", "UP", "B"]
 "tests/*" = ["E501"]
 "examples/*" = ["E501"]
 "attest/server.py" = ["E501"]  # inline HTML/JS template
+"cloud/**" = ["B008"]  # FastAPI Depends() in defaults is the framework idiom
+"cloud/tests/*" = ["E501", "B008"]

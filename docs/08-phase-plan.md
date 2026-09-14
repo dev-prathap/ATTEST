@@ -106,6 +106,16 @@ Exit P1.3: every entry point except HTTP gateway works; approvals from Slack.
 
 Exit P1 (**M2**): OSS live; cloud v0 usable; 3 deep recipes; 4 entry points; docs; launch done.
 
+**Status 2026-09-15: P1.4.1–P1.4.7 done; P1.4.8 (launch) is the founder's.**
+- P1.4.1/2 `cloud/` — FastAPI + SQLAlchemy (Postgres via `DATABASE_URL`, SQLite for tests): orgs, API keys with roles (agent / approver / admin), agents (auto-registered on sink), versioned policy (`GET/PUT /v1/policy`, `POST /v1/decide`), ledger sink (`POST /v1/attest`, rejects raw params, idempotent, **per-org hash chain** with the SDK's chain code), queries / verify / stats / export with signed manifest, confirm create / list / decide with Slack + webhook notifiers from org settings, `POST /slack/interact`. Every query scoped by the key's org. 21 tests incl. isolation and tamper detection.
+- P1.4.3 `dashboard/` — Next.js 15 (app router, no Tailwind in v0): ledger table + drill-down drawer (decision trail, confirm record, params preview, execution, verification evidence, hash), confirm inbox (approve / reject / edit, recent decisions), settings (connection, policy editor with versions, agents, API keys, org channels). Builds clean; talks to the cloud with an API key.
+- P1.4.4 `attest/cloud.py` — `Attest.cloud(url, api_key)`: `CloudLedger` (local chain + push, outbox retry when the cloud is down), `cloud_policy` / `refresh_policy`, `CloudStore` so `StoreGate` and `resume()` work over the cloud; Slack confirms routed via the cloud's org settings. End-to-end tests through the ASGI app.
+- P1.4.5 `docs/site` (mkdocs-material, strict build) — quickstart, concepts, levels, policy, five entry points, gates, recipes, ledger, cloud, CLI. Examples: decorator (unknown app), LangGraph, OpenAI Agents, MCP config, API-only, cloud.
+- P1.4.6 CI: sdk (3.11–3.13: ruff, SDK + cloud tests, all examples), docs (strict), dashboard (build).
+- P1.4.7 `launch/` — Show HN, "Why 200 OK is not proof", "EU AI Act-ready event log in 10 minutes" (hedged, not legal advice), LangChain integrations PR draft.
+- `deploy/` — Dockerfiles + compose (Postgres 16, API :8400, dashboard :3400).
+- **Open (doc 07):** cloud auth provider. v0 uses API keys with roles and no user login; the dashboard authenticates with a key. Better Auth / WorkOS / Clerk decision still pending. Stripe, retention, SSO are P2.
+
 ---
 
 ## P2 — Depth + reach (weeks 5–8) → M3, M4

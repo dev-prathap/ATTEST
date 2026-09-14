@@ -12,3 +12,8 @@ _ref-*/
 .pytest_cache/
 .ruff_cache/
 uv.lock
+site/
+attest-cloud.sqlite
+dashboard/node_modules/
+dashboard/.next/
+dashboard/next-env.d.ts

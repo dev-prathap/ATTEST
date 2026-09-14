@@ -1,7 +1,7 @@
 name: ci
 on: [push, pull_request]
 jobs:
-  test:
+  sdk:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -9,9 +9,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
-      - run: uv venv -p ${{ matrix.python }} && uv pip install -e ".[dev]"
-      - run: .venv/bin/ruff check attest tests examples
+      - run: uv venv -p ${{ matrix.python }} && uv pip install -e ".[dev]" -e "./cloud[dev]"
+      - run: .venv/bin/ruff check attest tests examples cloud
       - run: .venv/bin/pytest -q
+      - run: cd cloud && ../.venv/bin/pytest -q
       - run: ATTEST_AUTO_APPROVE=1 .venv/bin/python examples/unknown_app.py
       - run: ATTEST_AUTO_APPROVE=1 .venv/bin/python examples/langgraph_agent.py
+      - run: ATTEST_AUTO_APPROVE=1 .venv/bin/python examples/openai_agent.py
+      - run: .venv/bin/python examples/api_only.py
       - run: .venv/bin/attest --help && .venv/bin/attest-mcp --help
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv venv -p 3.12 && uv pip install mkdocs mkdocs-material
+      - run: .venv/bin/mkdocs build --strict
+  dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: cd dashboard && npm install --no-audit --no-fund && npm run build

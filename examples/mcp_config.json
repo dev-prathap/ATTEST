@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "gmail": {
+      "command": "attest-mcp",
+      "args": ["--upstream", "npx -y @modelcontextprotocol/server-gmail", "--server", "gmail", "--mode", "block",
+               "--policy", "attest.yaml", "--inbox-url", "http://127.0.0.1:8321"]
+    }
+  }
+}

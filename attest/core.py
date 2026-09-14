@@ -96,6 +96,22 @@ class Attest:
             out.append(conv)
         return out
 
+    @classmethod
+    def cloud(cls, url: str | None = None, api_key: str | None = None, *, wait: bool = True,
+              timeout_s: float | None = 900, ledger_path: str | None = None, transport: Any = None,
+              **kw: Any) -> Attest:
+        """A client wired to Attest Cloud: synced ledger, cloud policy, cloud-routed confirmations."""
+        from attest.cloud import CloudClient, CloudLedger, CloudStore, cloud_policy
+        from attest.gate import StoreGate
+        cloud = CloudClient(url, api_key, transport=transport)
+        ledger = CloudLedger(cloud, ledger_path or os.environ.get("ATTEST_LEDGER", ".attest/ledger.sqlite"))
+        store = CloudStore(cloud)
+        gate = kw.pop("gate", None) or StoreGate(store, wait=wait, timeout_s=timeout_s, poll_s=kw.pop("poll_s", 2.0))
+        policy = kw.pop("policy", None) or cloud_policy(cloud, ctx=PolicyContext())
+        at = cls(ledger=ledger, policy=policy, gate=gate, store=store, **kw)
+        at.cloud_client = cloud  # type: ignore[attr-defined]
+        return at
+
     # ── context ───────────────────────────────────────────────────────────
     @contextlib.contextmanager
     def run(self, run_id: str | None = None, *, actor: str | None = None):

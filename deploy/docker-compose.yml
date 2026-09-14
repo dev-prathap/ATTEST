@@ -1,0 +1,25 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: attest
+      POSTGRES_PASSWORD: ${PG_PASSWORD:-attest}
+      POSTGRES_DB: attest
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U attest"], interval: 5s, timeout: 3s, retries: 20 }
+  api:
+    build: { context: .., dockerfile: deploy/Dockerfile.api }
+    environment:
+      DATABASE_URL: postgresql+psycopg://attest:${PG_PASSWORD:-attest}@db:5432/attest
+      ATTEST_CLOUD_BOOTSTRAP_TOKEN: ${ATTEST_CLOUD_BOOTSTRAP_TOKEN:-change-me}
+      ATTEST_CORS_ORIGINS: ${ATTEST_CORS_ORIGINS:-http://localhost:3400}
+      SLACK_SIGNING_SECRET: ${SLACK_SIGNING_SECRET:-}
+    ports: ["8400:8400"]
+    depends_on: { db: { condition: service_healthy } }
+  dashboard:
+    build: { context: .., dockerfile: deploy/Dockerfile.dashboard }
+    environment: { NEXT_PUBLIC_ATTEST_CLOUD_URL: "http://localhost:8400" }
+    ports: ["3400:3400"]
+    depends_on: [api]
+volumes:
+  pgdata:

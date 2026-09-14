@@ -18,11 +18,40 @@ Attest is **not** an agent framework, not a connector platform, not a guardrail 
 | [07 — Decisions](./docs/07-decisions.md) | Locked decisions and open questions |
 | [08 — Phase plan](./docs/08-phase-plan.md) | Detailed phase-wise split: task IDs, deliverables, exit criteria, milestones, founder checklist |
 
-## Code
-- [attest/](./attest/) — the Python SDK (P1.1–P1.3 done: core, read-back, gates, adapters, MCP proxy). Quickstart in [attest/README.md](./attest/README.md).
-- [examples/unknown_app.py](./examples/unknown_app.py) — an app Attest has never seen, L1 → L2 → L3.
-- [examples/langgraph_agent.py](./examples/langgraph_agent.py) — LangGraph agent, Gmail + HubSpot, two `verified` entries.
-- [docs/notes/do-extraction.md](./docs/notes/do-extraction.md) — what was lifted from DO / DeerFlow and how.
+## Quickstart
+
+```bash
+pip install -e ".[dev]"            # PyPI name pending the naming decision
+```
+
+```python
+import attest
+
+@attest.action(system="gmail", verb="send", target="to")
+def send_email(to, subject, body): ...
+```
+
+The first external send pauses for a human; the ledger row says `acknowledged`, or `verified` once Attest can
+read back with the agent's own credentials (`Attest(readers={"gmail": service})`). `attest ledger` · `attest verify`.
+Full docs: `mkdocs serve` → [docs/site](./docs/site/quickstart.md).
+
+## Repository
+
+| path | what |
+| --- | --- |
+| [attest/](./attest/) | Python SDK — descriptor, registry, policy, hash-chained ledger, verification ladder + recipes, gates (console / Slack / webhook / inbox / LangGraph interrupt / pending + resume), adapters (LangGraph, OpenAI Agents), MCP proxy, CLI, cloud client. [attest/README.md](./attest/README.md) |
+| [cloud/](./cloud/) | Attest Cloud v0 — FastAPI + Postgres: orgs, keys, agents, versioned policy, per-org hash-chained ledger, confirm inbox with Slack / webhook, exports |
+| [dashboard/](./dashboard/) | Next.js dashboard — ledger drill-down, confirm inbox, policy / keys / settings |
+| [examples/](./examples/) | unknown app (L1 → L3), LangGraph agent (two `verified` rows), OpenAI Agents, MCP config, API-only, cloud |
+| [docs/site/](./docs/site/) | documentation site (mkdocs) · [docs/](./docs/) — product docs 01–08 · [docs/notes](./docs/notes/do-extraction.md) — DO / DeerFlow extraction |
+| [deploy/](./deploy/) | Dockerfiles + compose (Postgres, API :8400, dashboard :3400) |
+| [launch/](./launch/) | Show HN, blog drafts, LangChain integration PR draft |
+
+```bash
+pytest -q && (cd cloud && pytest -q)                   # 273 + 21 tests
+ATTEST_AUTO_APPROVE=1 python examples/langgraph_agent.py
+cd deploy && cp .env.example .env && docker compose up  # cloud + dashboard
+```
 
 ## One-line rules
 - We never execute the customer's action. Their tool executes; we observe, decide, gate, verify, record.
