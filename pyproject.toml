@@ -13,6 +13,7 @@ dependencies = [
 [project.scripts]
 attest = "attest.cli:main"
 attest-mcp = "attest.mcp.proxy:main"
+attest-mcp-server = "attest.mcp.server:main"
 
 [project.optional-dependencies]
 langgraph = ["langgraph>=0.2", "langchain-core>=0.3"]

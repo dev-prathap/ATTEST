@@ -22,6 +22,9 @@ def org(client):
     r = client.post("/v1/orgs", json={"name": "Acme", "domain": "acme.com"}, headers={"X-Bootstrap-Token": "boot"})
     assert r.status_code == 201, r.text
     data = r.json()
+    # existing tests assume no plan limits; billing tests reset to `free` explicitly
+    client.put("/v1/billing/plan", json={"plan": "pro"},
+               headers={"Authorization": f"Bearer {data['api_key']}", "X-Bootstrap-Token": "boot"})
     return {"id": data["org"]["id"], "admin": data["api_key"]}
 
 

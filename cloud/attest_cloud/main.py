@@ -28,7 +28,7 @@ from attest.ledger.exports import eu_ai_act_pack, ietf_jsonl
 from attest.ledger.models import LedgerEntry
 from attest.policy import PolicyContext, PolicyEngine, load_doc
 from attest.policy.yaml_loader import DEFAULT_POLICY_YAML
-from attest_cloud import __version__, chain
+from attest_cloud import __version__, billing, chain, ops
 from attest_cloud.auth import Principal, admin, approver, get_db, new_key, principal
 from attest_cloud.db import Agent, ApiKey, ConfirmRow, Database, LedgerRow, Org, Policy
 from attest_cloud.store import DbStore
@@ -49,6 +49,8 @@ async def _lifespan(a: FastAPI):  # pragma: no cover - wiring
 
 
 app.router.lifespan_context = _lifespan
+ops.install(app)
+ops.install_error_tracking(app)
 
 
 def configure(db: Database) -> FastAPI:
@@ -211,6 +213,9 @@ def create_agent(body: AgentCreate, p: Principal = Depends(admin), db: Database 
     with db.session() as s:
         if s.scalar(select(Agent).where(Agent.org_id == p.org_id, Agent.name == body.name)):
             raise HTTPException(409, "agent exists")
+        gate = billing.check_agent_slot(s, s.get(Org, p.org_id), body.name)
+        if not gate.ok:
+            raise HTTPException(402, gate.reason)
         a = Agent(id=new_id("agt"), org_id=p.org_id, name=body.name)
         s.add(a)
         s.flush()
@@ -298,6 +303,10 @@ def attest(body: AttestIn, p: Principal = Depends(principal), db: Database = Dep
             row, created = chain.append(s, p.org_id, payload, entry_id=entry_id, client_seq=e.get("seq"),
                                         client_hash=e.get("hash"))
             if created:
+                org = s.get(Org, p.org_id)
+                gate = billing.check_agent_slot(s, org, payload.get("agent") or "")
+                if payload.get("agent") and not gate.ok:
+                    raise HTTPException(402, gate.reason)
                 _touch_agent(s, p.org_id, payload.get("agent"))
             out.append({"id": row.entry_id, "action_id": row.action_id, "seq": row.seq, "hash": row.hash})
     return out
@@ -345,6 +354,10 @@ def export(p: Principal = Depends(principal), db: Database = Depends(get_db), fo
     with db.session() as s:
         rows = s.scalars(q.order_by(LedgerRow.seq)).all()
         rep = chain.verify(s, p.org_id)
+    if format in ("ietf", "jsonl", "eu-ai-act", "eu_ai_act"):
+        gate = billing.check_compliance_exports(p.org)
+        if not gate.ok:
+            raise HTTPException(402, gate.reason)
     if format in ("ietf", "jsonl"):
         return Response(ietf_jsonl([_to_entry(r) for r in rows]), media_type="application/x-ndjson")
     if format in ("eu-ai-act", "eu_ai_act"):
@@ -547,6 +560,78 @@ async def slack_interact(request: Request, db: Database = Depends(get_db)) -> di
         return {"ok": True, "decision": dec.to_dict() if dec else None}
 
 
+# ── billing ───────────────────────────────────────────────────────────────────
+@app.get("/v1/billing")
+def get_billing(p: Principal = Depends(principal), db: Database = Depends(get_db)) -> dict[str, Any]:
+    with db.session() as s:
+        org = s.get(Org, p.org_id)
+        use = billing.usage(s, p.org_id)
+        lim = billing.limits(org)
+        st = org.settings or {}
+    return {"plan": billing.plan_of(org), "limits": lim, "usage": use,
+            "verified_remaining": (None if lim["verified_actions"] is None
+                                   else max(0, lim["verified_actions"] - use["verified_actions"])),
+            "stripe": {"status": st.get("stripe_status"), "subscription": st.get("stripe_subscription"),
+                       "last_invoice": st.get("last_invoice")},
+            "plans": billing.PLANS}
+
+
+class CheckoutIn(BaseModel):
+    plan: str = Field(pattern="^(team|pro)$")
+    success_url: str
+    cancel_url: str
+
+
+@app.post("/v1/billing/checkout")
+def billing_checkout(body: CheckoutIn, p: Principal = Depends(admin), db: Database = Depends(get_db)) -> dict[str, Any]:
+    with db.session() as s:
+        org = s.get(Org, p.org_id)
+    try:
+        session = billing.checkout_session(org, body.plan, success_url=body.success_url, cancel_url=body.cancel_url)
+    except RuntimeError as e:
+        raise HTTPException(503, str(e)) from e
+    return {"url": session.get("url"), "id": session.get("id")}
+
+
+class PlanIn(BaseModel):
+    plan: str = Field(pattern="^(free|team|pro|enterprise)$")
+    overrides: dict[str, Any] | None = None
+
+
+@app.put("/v1/billing/plan")
+def set_plan(body: PlanIn, request: Request, p: Principal = Depends(admin),
+             db: Database = Depends(get_db)) -> dict[str, Any]:
+    """Operator override (needs the bootstrap token as well) — for enterprise contracts and manual upgrades."""
+    expected = os.environ.get("ATTEST_CLOUD_BOOTSTRAP_TOKEN")
+    if not expected or request.headers.get("X-Bootstrap-Token") != expected:
+        raise HTTPException(403, "plan changes require the operator bootstrap token")
+    with db.session() as s:
+        org = s.get(Org, p.org_id)
+        st = dict(org.settings or {})
+        st["plan"] = body.plan
+        if body.overrides is not None:
+            st["plan_overrides"] = body.overrides
+        org.settings = st
+        return {"plan": body.plan, "limits": billing.limits(org)}
+
+
+@app.post("/stripe/webhook")
+async def stripe_webhook(request: Request, db: Database = Depends(get_db)) -> dict[str, Any]:
+    raw = await request.body()
+    secret = os.environ.get("STRIPE_WEBHOOK_SECRET")
+    if not secret:
+        raise HTTPException(503, "STRIPE_WEBHOOK_SECRET not set")
+    if not billing.verify_stripe_signature(secret, request.headers.get("Stripe-Signature", ""), raw):
+        raise HTTPException(401, "bad stripe signature")
+    try:
+        event = json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise HTTPException(400, "bad payload") from e
+    with db.session() as s:
+        out = billing.apply_stripe_event(s, event)
+    return {"ok": True, **out}
+
+
 # ── settings ──────────────────────────────────────────────────────────────────
 _SECRET_KEYS = ("slack_bot_token", "slack_signing_secret", "webhook_secret")
 
@@ -557,6 +642,7 @@ def _settings_json(org: Org) -> dict[str, Any]:
         if st.get(k):
             st[k] = st[k][:6] + "…"
     st["domain"] = org.domain
+    st["plan"] = billing.plan_of(org)
     return st
 
 
@@ -574,6 +660,11 @@ def put_settings(body: SettingsPut, p: Principal = Depends(admin), db: Database 
         for k, v in body.model_dump(exclude_none=True).items():
             if k == "domain":
                 org.domain = v
+            elif k == "retention_days":
+                gate = billing.check_retention(org, int(v))
+                if not gate.ok:
+                    raise HTTPException(402, gate.reason)
+                st[k] = v
             else:
                 st[k] = v
         org.settings = st

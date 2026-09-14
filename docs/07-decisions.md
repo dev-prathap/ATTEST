@@ -20,7 +20,7 @@
 - Final product name and domain.
 - Cloud auth provider: keep DO's Better Auth vs. WorkOS/Clerk. *(v0 ships API keys with roles — agent / approver / admin — and no user login; the dashboard authenticates with a key. Decide before public cloud beta.)*
 - Params storage default: hash-only vs. allow-listed preview (leaning hash + preview).
-- Exact usage-pricing unit: per verified action vs. per attested action.
+- Exact usage-pricing unit: per verified action vs. per attested action. *(Provisionally **verified actions** in cloud v0 billing: rows at verified / verified-custom / unverified. Acknowledged and attested-only rows are free — the floor stays free so nobody is turned away.)*
 - Whether the MCP proxy also serves as the HTTP gateway (single binary) in Phase 3.
 - Signed-ledger anchoring (external timestamping) — Phase 3 or later.
 

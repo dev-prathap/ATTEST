@@ -37,3 +37,25 @@ The response carries the admin API key (shown once). Open the dashboard, paste t
 
 Roles: `agent` (sink, policy read, confirm create/poll) · `approver` (+ decide) · `admin` (+ keys, policy, settings).
 Every query is scoped by the key's org; the hash chain is per org.
+
+## Plans and billing
+
+| plan | agents | retention | verified actions / month | compliance exports |
+| --- | --- | --- | --- | --- |
+| free | 1 | 7 days | 100 | – |
+| team $99 | 3 | 30 days | 2,000 | – |
+| pro $499 | unlimited | 365 days | 20,000 | IETF + EU AI Act |
+| enterprise | per contract | per contract | per contract | ✓ |
+
+`GET /v1/billing` shows plan, limits, usage and Stripe status. Gates answer `402` with the reason (agent slots,
+compliance exports, retention above the plan). The usage unit is a **verified action**: a row whose level is
+`verified`, `verified-custom` or `unverified` — acknowledged and attested-only rows are free. Stripe:
+`POST /v1/billing/checkout` (needs `STRIPE_SECRET_KEY`, `STRIPE_PRICE_TEAM|PRO`), `POST /stripe/webhook`
+(`STRIPE_WEBHOOK_SECRET`; subscription and invoice events update the plan). Operators set plans and overrides
+with `PUT /v1/billing/plan` + the bootstrap token.
+
+## Operations
+
+`ATTEST_RATE_LIMIT` requests / minute per key (429 + Retry-After), `SENTRY_DSN` for error tracking (optional
+`sentry_sdk`), `deploy/backup.sh` nightly `pg_dump` with 30-day rotation, `ATTEST_SIGNING_KEY` for checkpoints
+and manifests. SDK telemetry is **off** unless `ATTEST_TELEMETRY=1`, and then sends counts only.

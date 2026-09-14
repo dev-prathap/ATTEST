@@ -87,6 +87,8 @@ class Attest:
         self.recipes = RecipeDriver(readers)
         self.convention = ConventionDriver(http_get) if http_get is not None else None
         self.drivers = list(drivers or [])
+        from attest.telemetry import Telemetry
+        self.telemetry = Telemetry()
 
     def _drivers(self, readers: dict[str, Any] | None = None, http_get: Any = None) -> list[ReadBackDriver]:
         out: list[ReadBackDriver] = list(self.drivers)
@@ -234,6 +236,8 @@ class Attest:
                               if rec.status == "done" else VerificationRecord(level="attested-only", method="none",
                                                                               evidence={"detail": "execution failed"}))
         self.ledger.append(entry)
+        self.telemetry.record(decision=pol.decision, level=entry.verification.level, system=d.system,
+                              entry_point=d.extra.get("framework") or d.source)
         if rec.status == "failed":
             raise rec._exc  # type: ignore[attr-defined]
         return ActionReceipt(entry, result, d, pol, decision)

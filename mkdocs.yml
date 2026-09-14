@@ -24,7 +24,9 @@ nav:
       - Decorator: entry/decorator.md
       - LangGraph: entry/langgraph.md
       - OpenAI Agents: entry/openai.md
-      - MCP proxy: entry/mcp.md
+      - MCP proxy & verify server: entry/mcp.md
+      - Claude Agent SDK · CrewAI · DeerFlow: entry/frameworks.md
+      - Vercel AI SDK (HTTP): entry/vercel.md
       - API-only: entry/api.md
   - Gates & confirmations: gates.md
   - Read-back recipes: recipes.md
