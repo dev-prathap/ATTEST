@@ -3,11 +3,14 @@ one transaction that reads the tail and writes the next link."""
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 import threading
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from attest.ledger import checkpoints as cps
 from attest.ledger import hashchain
 from attest.ledger.models import LedgerEntry
 
@@ -31,12 +34,21 @@ CREATE TABLE IF NOT EXISTS ledger (
 );
 CREATE INDEX IF NOT EXISTS idx_ledger_run ON ledger(run_id);
 CREATE INDEX IF NOT EXISTS idx_ledger_agent ON ledger(agent);
+CREATE TABLE IF NOT EXISTS checkpoint (
+    seq        INTEGER PRIMARY KEY,
+    hash       TEXT NOT NULL,
+    signed_at  TEXT NOT NULL,
+    scope      TEXT NOT NULL,
+    signature  TEXT,
+    key_id     TEXT
+);
 """
 
 
 class SqliteLedger:
-    def __init__(self, path: str | Path = ".attest/ledger.sqlite"):
+    def __init__(self, path: str | Path = ".attest/ledger.sqlite", *, signing_key: str | None = None):
         self.path = str(path)
+        self.signing_key = signing_key if signing_key is not None else os.environ.get("ATTEST_LEDGER_KEY")
         if self.path != ":memory:":
             Path(self.path).parent.mkdir(parents=True, exist_ok=True)
         self._lock = threading.RLock()
@@ -116,7 +128,65 @@ class SqliteLedger:
 
     # ── integrity ─────────────────────────────────────────────────────────
     def verify_chain(self) -> hashchain.ChainReport:
-        return hashchain.verify(self._rows())
+        """Verifies from genesis, or from the newest checkpoint that precedes the first retained row (after prune)."""
+        rows = self._rows()
+        anchor = None
+        if rows and rows[0]["seq"] > 1:
+            with self._lock:
+                cp = self._cx.execute("SELECT seq, hash FROM checkpoint WHERE seq = ?",
+                                      (rows[0]["seq"] - 1,)).fetchone()
+            if cp is None:
+                return hashchain.ChainReport(False, 0, rows[0]["seq"], [f"rows before seq {rows[0]['seq']} are missing "
+                                                                         "and no checkpoint anchors the chain"])
+            anchor = (cp["seq"], cp["hash"])
+        return hashchain.verify(rows, anchor=anchor)
+
+    # ── checkpoints & retention ───────────────────────────────────────────
+    def checkpoint(self, scope: str = "local") -> cps.Checkpoint | None:
+        """Sign the current head. Returns None on an empty ledger."""
+        tail = self.last()
+        if tail is None:
+            return None
+        cp = cps.sign(tail.seq, tail.hash, key=self.signing_key, scope=scope)  # type: ignore[arg-type]
+        with self._lock:
+            self._cx.execute("INSERT OR REPLACE INTO checkpoint (seq, hash, signed_at, scope, signature, key_id) "
+                             "VALUES (?,?,?,?,?,?)", (cp.seq, cp.hash, cp.signed_at, cp.scope, cp.signature, cp.key_id))
+        return cp
+
+    def checkpoints(self) -> list[cps.Checkpoint]:
+        with self._lock:
+            rows = self._cx.execute("SELECT * FROM checkpoint ORDER BY seq").fetchall()
+        return [cps.Checkpoint(r["seq"], r["hash"], r["signed_at"], r["scope"], r["signature"], r["key_id"])
+                for r in rows]
+
+    def prune(self, *, older_than_days: int | None = None, before_seq: int | None = None) -> int:
+        """Retention: drop rows older than N days (or below a seq), keeping the chain verifiable by writing a
+        checkpoint at the last pruned row. Returns rows removed. Never prunes past the head."""
+        with self._lock:
+            if before_seq is None:
+                if older_than_days is None:
+                    raise ValueError("prune needs older_than_days or before_seq")
+                cutoff = (datetime.now(UTC) - timedelta(days=older_than_days)).isoformat()
+                row = self._cx.execute("SELECT MAX(seq) AS s FROM ledger WHERE created_at < ?", (cutoff,)).fetchone()
+                before_seq = (row["s"] or 0) + 1
+            head = self._cx.execute("SELECT MAX(seq) AS s FROM ledger").fetchone()["s"] or 0
+            before_seq = min(before_seq, head)  # always keep the head row
+            last = self._cx.execute("SELECT seq, hash FROM ledger WHERE seq < ? ORDER BY seq DESC LIMIT 1",
+                                    (before_seq,)).fetchone()
+            if last is None:
+                return 0
+            cp = cps.sign(last["seq"], last["hash"], key=self.signing_key, scope="local")  # type: ignore[arg-type]
+            self._cx.execute("BEGIN IMMEDIATE")
+            try:
+                self._cx.execute("INSERT OR REPLACE INTO checkpoint (seq, hash, signed_at, scope, signature, key_id) "
+                                 "VALUES (?,?,?,?,?,?)",
+                                 (cp.seq, cp.hash, cp.signed_at, cp.scope, cp.signature, cp.key_id))
+                cur = self._cx.execute("DELETE FROM ledger WHERE seq < ?", (before_seq,))
+                self._cx.execute("COMMIT")
+            except Exception:
+                self._cx.execute("ROLLBACK")
+                raise
+            return cur.rowcount
 
     def export(self, fmt: str = "json") -> str:
         rows = self._rows()
@@ -133,6 +203,16 @@ class SqliteLedger:
                 w.writerow([r["seq"], r["created_at"], r["run_id"], r["agent"], r["actor"], r["system"], r["verb"],
                             r["decision"], r["level"], r["hash"]])
             return buf.getvalue()
+        if fmt in ("ietf", "jsonl"):
+            from attest.ledger.exports import ietf_jsonl
+            return ietf_jsonl([self._to_entry(r) for r in rows])
+        if fmt in ("eu-ai-act", "eu_ai_act"):
+            from attest.ledger.exports import eu_ai_act_pack
+            rep = self.verify_chain()
+            return json.dumps(eu_ai_act_pack(
+                [self._to_entry(r) for r in rows], checkpoints=[c.to_dict() for c in self.checkpoints()],
+                chain={"ok": rep.ok, "checked": rep.checked, "head": rows[-1]["hash"] if rows else None},
+                signing_key=self.signing_key), indent=2, default=str)
         raise ValueError(f"unknown export format {fmt!r}")
 
     def close(self) -> None:

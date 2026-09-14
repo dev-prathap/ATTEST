@@ -3,8 +3,17 @@
 policies:
   - match: { verb: [send, share], target: external }
     decision: ask
-    approvers: [sales-leads]
+    approvers: [sales-leads]          # a group name (below) or a person
     reason: external sends need a human
+
+groups:                               # approver groups — resolved onto the confirm request
+  sales-leads: [priya@acme.com, dev@acme.com]
+
+agents:                               # per-agent overrides — evaluated before the global policies
+  followup-agent@v3:
+    policies:
+      - match: { system: hubspot, verb: update }
+        decision: act
 """
 from __future__ import annotations
 
@@ -76,6 +85,37 @@ def _listify(v: Any) -> list[str]:
     return [str(v)]
 
 
+@dataclass
+class PolicyDoc:
+    rules: list[Rule]
+    groups: dict[str, list[str]] = field(default_factory=dict)
+    agent_rules: dict[str, list[Rule]] = field(default_factory=dict)
+
+    def resolve_approvers(self, names: list[str]) -> list[str]:
+        """Group names ⇒ members; people pass through. Order kept, duplicates dropped."""
+        out: list[str] = []
+        for n in names:
+            for m in self.groups.get(n, [n]):
+                if m not in out:
+                    out.append(m)
+        return out
+
+
+def parse_doc(doc: dict[str, Any] | list[Any]) -> PolicyDoc:
+    if not isinstance(doc, dict):
+        return PolicyDoc(parse_rules(doc))
+    groups = {str(k): _listify(v) for k, v in (doc.get("groups") or {}).items()}
+    agent_rules: dict[str, list[Rule]] = {}
+    for agent, spec in (doc.get("agents") or {}).items():
+        items = spec.get("policies", spec.get("rules", [])) if isinstance(spec, dict) else spec
+        rules = parse_rules(items or [])
+        for r in rules:
+            r.name = r.name or f"agent:{agent}"
+            r.match.setdefault("agent", [str(agent)])
+        agent_rules[str(agent)] = rules
+    return PolicyDoc(parse_rules(doc), groups, agent_rules)
+
+
 def parse_rules(doc: dict[str, Any] | list[Any]) -> list[Rule]:
     items = doc.get("policies", doc.get("rules", [])) if isinstance(doc, dict) else doc
     rules: list[Rule] = []
@@ -98,8 +138,16 @@ def load_yaml(text: str) -> list[Rule]:
     return parse_rules(yaml.safe_load(text) or {})
 
 
+def load_doc(text: str) -> PolicyDoc:
+    return parse_doc(yaml.safe_load(text) or {})
+
+
 def load_file(path: str | Path) -> list[Rule]:
     return load_yaml(Path(path).read_text())
+
+
+def load_doc_file(path: str | Path) -> PolicyDoc:
+    return load_doc(Path(path).read_text())
 
 
 DEFAULT_POLICY_YAML = """\

@@ -151,3 +151,48 @@ def test_r0_blocked_beats_yaml_act():
 def test_result_to_dict_is_json_ready(engine):
     d = engine.evaluate(D(system="gmail", verb="send", params={"to": "a@b.com"})).to_dict()
     assert set(d) >= {"decision", "risk_tier", "reasons", "target_class", "rules_fired", "approvers"}
+
+
+# ── P2.2: approver groups and per-agent overrides ─────────────────────────────
+GROUPED = """
+policies:
+  - match: { system: hubspot, verb: delete }
+    decision: refuse
+  - match: { verb: [delete, pay] }
+    decision: ask
+    approvers: [finance-leads, ceo@acme.com]
+groups:
+  finance-leads: [priya@acme.com, dev@acme.com]
+agents:
+  followup-agent@v3:
+    policies:
+      - match: { system: hubspot, verb: delete }
+        decision: act
+"""
+
+
+def test_groups_resolve_to_members():
+    e = PolicyEngine.from_yaml(GROUPED)
+    r = e.evaluate(D(system="stripe", verb="pay"))
+    assert r.approvers == ["finance-leads", "ceo@acme.com"]
+    assert r.approver_members == ["priya@acme.com", "dev@acme.com", "ceo@acme.com"]
+    assert r.to_dict()["approver_members"] == r.approver_members
+
+
+def test_agent_overrides_run_before_global_rules():
+    e = PolicyEngine.from_yaml(GROUPED)
+    mine = e.evaluate(D(system="hubspot", verb="delete", agent="followup-agent@v3"))
+    other = e.evaluate(D(system="hubspot", verb="delete", agent="other-agent"))
+    assert mine.decision == "act" and "policy:agent:followup-agent@v3" in mine.rules_fired
+    assert other.decision == "refuse"
+    assert e.agent_rules["followup-agent@v3"][0].match["agent"] == ["followup-agent@v3"]
+
+
+def test_decision_authorised_by_group():
+    from attest.gate import ConfirmDecision, ConfirmRequest
+    req = ConfirmRequest("a", D(system="stripe", verb="pay"), [], "very_high", approvers=["finance-leads"],
+                         approver_members=["priya@acme.com", "dev@acme.com"])
+    assert ConfirmDecision("approved", "priya@acme.com").authorised(req)
+    assert ConfirmDecision("approved", "priya@acme.com (U1)").authorised(req)
+    assert not ConfirmDecision("approved", "bob@acme.com").authorised(req)
+    assert ConfirmDecision("approved", "anyone").authorised(ConfirmRequest("b", D(), [], "high"))

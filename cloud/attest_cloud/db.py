@@ -104,6 +104,20 @@ class LedgerRow(Base):
     received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
 
 
+class CheckpointRow(Base):
+    __tablename__ = "ledger_checkpoint"
+    __table_args__ = (UniqueConstraint("org_id", "seq"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    org_id: Mapped[str] = mapped_column(ForeignKey("org.id", ondelete="CASCADE"), index=True)
+    seq: Mapped[int] = mapped_column(Integer)
+    hash: Mapped[str] = mapped_column(String(64))
+    signed_at: Mapped[str] = mapped_column(String(40))
+    scope: Mapped[str] = mapped_column(String(80))
+    signature: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    key_id: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    reason: Mapped[str | None] = mapped_column(String(40), nullable=True)  # manual | retention | export
+
+
 class ConfirmRow(Base):
     __tablename__ = "confirm_request"
     __table_args__ = (Index("ix_confirm_org_status", "org_id", "status"),)
@@ -118,6 +132,7 @@ class ConfirmRow(Base):
     risk_tier: Mapped[str] = mapped_column(String(20))
     approvers: Mapped[list] = mapped_column(JSON, default=list)
     hold: Mapped[bool] = mapped_column(Boolean, default=False)
+    approver_members: Mapped[list] = mapped_column(JSON, default=list)
     approver: Mapped[str | None] = mapped_column(String(200), nullable=True)
     edits: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)

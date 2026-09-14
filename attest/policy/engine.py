@@ -11,7 +11,7 @@ from pathlib import Path
 
 from attest.descriptor import ActionDescriptor
 from attest.policy import rules as R
-from attest.policy.yaml_loader import Rule, default_rules, load_file, load_yaml
+from attest.policy.yaml_loader import PolicyDoc, Rule, default_rules, load_doc, load_doc_file
 
 
 @dataclass
@@ -21,7 +21,8 @@ class PolicyResult:
     reasons: list[str] = field(default_factory=list)
     target_class: str = "none"
     rules_fired: list[str] = field(default_factory=list)
-    approvers: list[str] = field(default_factory=list)
+    approvers: list[str] = field(default_factory=list)  # as written in the rule (groups or people)
+    approver_members: list[str] = field(default_factory=list)  # groups resolved to people
     hold: bool = False  # needs input fixed, not just a yes
 
     @property
@@ -35,21 +36,35 @@ class PolicyResult:
     def to_dict(self) -> dict:
         return {"decision": self.decision, "risk_tier": self.risk_tier, "reasons": self.reasons,
                 "target_class": self.target_class, "rules_fired": self.rules_fired, "approvers": self.approvers,
-                "hold": self.hold}
+                "approver_members": self.approver_members, "hold": self.hold}
 
 
 class PolicyEngine:
-    def __init__(self, rules: list[Rule] | None = None, ctx: R.PolicyContext | None = None):
+    def __init__(self, rules: list[Rule] | None = None, ctx: R.PolicyContext | None = None, *,
+                 groups: dict[str, list[str]] | None = None, agent_rules: dict[str, list[Rule]] | None = None):
         self.rules = default_rules() if rules is None else rules
         self.ctx = ctx or R.PolicyContext()
+        self.doc = PolicyDoc(self.rules, groups or {}, agent_rules or {})
+
+    @property
+    def groups(self) -> dict[str, list[str]]:
+        return self.doc.groups
+
+    @property
+    def agent_rules(self) -> dict[str, list[Rule]]:
+        return self.doc.agent_rules
+
+    @classmethod
+    def from_doc(cls, doc: PolicyDoc, ctx: R.PolicyContext | None = None) -> PolicyEngine:
+        return cls(doc.rules, ctx, groups=doc.groups, agent_rules=doc.agent_rules)
 
     @classmethod
     def from_yaml(cls, text: str, ctx: R.PolicyContext | None = None) -> PolicyEngine:
-        return cls(load_yaml(text), ctx)
+        return cls.from_doc(load_doc(text), ctx)
 
     @classmethod
     def from_file(cls, path: str | Path, ctx: R.PolicyContext | None = None) -> PolicyEngine:
-        return cls(load_file(path), ctx)
+        return cls.from_doc(load_doc_file(path), ctx)
 
     @classmethod
     def from_env(cls, ctx: R.PolicyContext | None = None) -> PolicyEngine:
@@ -81,12 +96,14 @@ class PolicyEngine:
         if r0.decision == "ask":
             return self._finish(out, "ask", [r0])
 
-        for rule in self.rules:
+        candidates = (self.doc.agent_rules.get(d.agent or "", []) if d.agent else []) + self.rules
+        for rule in candidates:
             if rule.matches(d, tier=tier, target_class=out.target_class):
                 label = f"policy:{rule.name or rule.decision}"
                 out.rules_fired.append(label)
                 out.reasons.append(rule.reason or f"matched policy rule {rule.name or rule.match}")
                 out.approvers = list(rule.approvers)
+                out.approver_members = self.doc.resolve_approvers(rule.approvers)
                 out.decision = rule.decision
                 return out
 

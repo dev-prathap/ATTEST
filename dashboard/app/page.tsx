@@ -46,6 +46,9 @@ export default function LedgerPage() {
         <button className="primary" onClick={load}>Apply</button>
         <a href={`${loadConfig().url}/v1/export?format=csv`} onClick={e => { e.preventDefault(); download("csv"); }}>export CSV</a>
         <a href="#" onClick={e => { e.preventDefault(); download("json"); }}>export JSON</a>
+        <a href="#" onClick={e => { e.preventDefault(); download("ietf"); }}>IETF audit trail</a>
+        <a href="#" onClick={e => { e.preventDefault(); download("eu-ai-act"); }}>EU AI Act pack</a>
+        <button onClick={checkpoint}>Checkpoint now</button>
       </div>
       <table>
         <thead><tr><th>#</th><th>when</th><th>action</th><th>target</th><th>agent / actor</th><th>decision</th><th>confirm</th><th>level</th></tr></thead>
@@ -69,11 +72,20 @@ export default function LedgerPage() {
     </>
   );
 
+  async function checkpoint() {
+    try {
+      const c = await api<{ seq: number; signature?: string | null }>("/v1/ledger/checkpoint", { method: "POST" });
+      alert(`checkpoint at #${c.seq}${c.signature ? " (signed)" : " (unsigned — set ATTEST_SIGNING_KEY)"}`);
+      load();
+    } catch (e) { setErr(String(e)); }
+  }
+
   async function download(fmt: string) {
     const { url, key } = loadConfig();
     const res = await fetch(`${url}/v1/export?format=${fmt}`, { headers: { Authorization: `Bearer ${key}` } });
     const blob = await res.blob();
-    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `attest-ledger.${fmt}`; a.click();
+    const ext = fmt === "ietf" ? "jsonl" : fmt === "eu-ai-act" ? "eu-ai-act.json" : fmt;
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `attest-ledger.${ext}`; a.click();
   }
 }
 

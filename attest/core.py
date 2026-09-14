@@ -388,7 +388,8 @@ class Attest:
                                            rules_fired=pol.rules_fired, target_class=pol.target_class)
 
     def _request(self, d: ActionDescriptor, pol: PolicyResult) -> ConfirmRequest:
-        return ConfirmRequest(d.id, d, pol.reasons, pol.risk_tier, pol.approvers, pol.hold, channel=self.gate.name)
+        return ConfirmRequest(d.id, d, pol.reasons, pol.risk_tier, pol.approvers, pol.hold,
+                              approver_members=pol.approver_members, channel=self.gate.name)
 
     def _after_confirm(self, d: ActionDescriptor, entry: LedgerEntry, dec: ConfirmDecision
                        ) -> tuple[ActionDescriptor, LedgerEntry]:

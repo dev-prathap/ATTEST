@@ -24,7 +24,9 @@ from attest.descriptor import ActionDescriptor, new_id
 from attest.gate import ConfirmDecision, ConfirmRequest
 from attest.gate.slack import SlackNotifier, handle_interaction, verify_slack_signature
 from attest.gate.webhook import WebhookNotifier
-from attest.policy import PolicyContext, PolicyEngine, load_yaml
+from attest.ledger.exports import eu_ai_act_pack, ietf_jsonl
+from attest.ledger.models import LedgerEntry
+from attest.policy import PolicyContext, PolicyEngine, load_doc
 from attest.policy.yaml_loader import DEFAULT_POLICY_YAML
 from attest_cloud import __version__, chain
 from attest_cloud.auth import Principal, admin, approver, get_db, new_key, principal
@@ -91,6 +93,7 @@ class ConfirmCreate(BaseModel):
     reasons: list[str] = []
     risk_tier: str = "high"
     approvers: list[str] = []
+    approver_members: list[str] = []
     hold: bool = False
     id: str | None = None
     resume_token: str | None = None
@@ -112,6 +115,7 @@ class SettingsPut(BaseModel):
     webhook_url: str | None = None
     webhook_secret: str | None = None
     inbox_url: str | None = None
+    retention_days: int | None = Field(default=None, ge=1, le=3650)
 
 
 def _org_json(o: Org) -> dict[str, Any]:
@@ -239,7 +243,8 @@ def get_policy(p: Principal = Depends(principal), db: Database = Depends(get_db)
 @app.put("/v1/policy")
 def put_policy(body: PolicyPut, p: Principal = Depends(admin), db: Database = Depends(get_db)) -> dict[str, Any]:
     try:
-        rules = load_yaml(body.yaml)
+        doc = load_doc(body.yaml)
+        rules = doc.rules
     except Exception as e:
         raise HTTPException(422, f"invalid policy: {e}") from e
     with db.session() as s:
@@ -250,7 +255,8 @@ def put_policy(body: PolicyPut, p: Principal = Depends(admin), db: Database = De
         pol = Policy(id=new_id("pol"), org_id=p.org_id, version=version, yaml=body.yaml, created_by=p.name)
         s.add(pol)
         s.flush()
-        return {"version": version, "rules": len(rules), "updated_at": pol.created_at}
+        return {"version": version, "rules": len(rules), "groups": len(doc.groups), "agents": len(doc.agent_rules),
+                "updated_at": pol.created_at}
 
 
 @app.get("/v1/policy/versions")
@@ -330,17 +336,6 @@ def ledger_stats(p: Principal = Depends(principal), db: Database = Depends(get_d
     return {"total": total, "by_level": by_level, "by_decision": by_decision}
 
 
-@app.get("/v1/ledger/{action_id}")
-def ledger_action(action_id: str, p: Principal = Depends(principal),
-                  db: Database = Depends(get_db)) -> list[dict[str, Any]]:
-    with db.session() as s:
-        rows = s.scalars(select(LedgerRow).where(LedgerRow.org_id == p.org_id, LedgerRow.action_id == action_id)
-                         .order_by(LedgerRow.seq)).all()
-    if not rows:
-        raise HTTPException(404, "unknown action")
-    return [_entry_json(r) for r in rows]
-
-
 @app.get("/v1/export")
 def export(p: Principal = Depends(principal), db: Database = Depends(get_db), format: str = "json",
            run_id: str | None = None) -> Response:
@@ -350,6 +345,15 @@ def export(p: Principal = Depends(principal), db: Database = Depends(get_db), fo
     with db.session() as s:
         rows = s.scalars(q.order_by(LedgerRow.seq)).all()
         rep = chain.verify(s, p.org_id)
+    if format in ("ietf", "jsonl"):
+        return Response(ietf_jsonl([_to_entry(r) for r in rows]), media_type="application/x-ndjson")
+    if format in ("eu-ai-act", "eu_ai_act"):
+        pack = eu_ai_act_pack([_to_entry(r) for r in rows], system={"org": p.org.slug, "org_name": p.org.name},
+                              checkpoints=chain.checkpoints(s0, p.org_id) if (s0 := db.Session()) else [],
+                              chain={"ok": rep.ok, "checked": rep.checked, "head": rows[-1].hash if rows else None},
+                              signing_key=chain.signing_key(), scope=f"org:{p.org.slug}")
+        s0.close()
+        return Response(json.dumps(pack, default=str, indent=2), media_type="application/json")
     if format == "csv":
         buf = io.StringIO()
         w = csv.writer(buf)
@@ -366,6 +370,63 @@ def export(p: Principal = Depends(principal), db: Database = Depends(get_db), fo
                 "chain": {"ok": rep.ok, "checked": rep.checked, "head": rows[-1].hash if rows else None}}
     body = json.dumps({"manifest": manifest, "entries": [_entry_json(r) for r in rows]}, default=str, indent=2)
     return Response(body, media_type="application/json")
+
+
+def _to_entry(r: LedgerRow) -> LedgerEntry:
+    e = LedgerEntry.model_validate(r.payload)
+    e.seq, e.prev_hash, e.payload_hash, e.hash = r.seq, r.prev_hash, r.payload_hash, r.hash
+    return e
+
+
+@app.post("/v1/ledger/checkpoint", status_code=201)
+def ledger_checkpoint(p: Principal = Depends(admin), db: Database = Depends(get_db)) -> dict[str, Any]:
+    with db.chain_lock, db.session() as s:
+        cp = chain.checkpoint(s, p.org_id, p.org.slug, reason="manual")
+        if cp is None:
+            raise HTTPException(409, "empty ledger")
+        return chain.checkpoints(s, p.org_id)[-1]
+
+
+@app.get("/v1/ledger/checkpoints")
+def ledger_checkpoints(p: Principal = Depends(principal), db: Database = Depends(get_db)) -> list[dict[str, Any]]:
+    with db.session() as s:
+        return chain.checkpoints(s, p.org_id)
+
+
+class PruneIn(BaseModel):
+    older_than_days: int | None = Field(default=None, ge=1)
+    before_seq: int | None = Field(default=None, ge=1)
+
+
+@app.post("/v1/ledger/prune")
+def ledger_prune(body: PruneIn, p: Principal = Depends(admin), db: Database = Depends(get_db)) -> dict[str, Any]:
+    """Retention. Uses the org's `retention_days` setting when the body names neither bound."""
+    days = body.older_than_days or (p.org.settings or {}).get("retention_days")
+    with db.chain_lock, db.session() as s:
+        before = body.before_seq
+        if before is None:
+            if not days:
+                raise HTTPException(422, "set older_than_days, before_seq, or the org retention_days setting")
+            from datetime import timedelta
+            cutoff = datetime.now(UTC) - timedelta(days=int(days))
+            last_old = s.scalar(select(func.max(LedgerRow.seq)).where(LedgerRow.org_id == p.org_id,
+                                                                     LedgerRow.created_at < cutoff))
+            before = (last_old or 0) + 1
+        removed = chain.prune(s, p.org_id, p.org.slug, before_seq=before)
+        rep = chain.verify(s, p.org_id)
+    return {"removed": removed, "chain_ok": rep.ok, "entries": rep.checked}
+
+
+@app.get("/v1/ledger/{action_id}")
+def ledger_action(action_id: str, p: Principal = Depends(principal),
+                  db: Database = Depends(get_db)) -> list[dict[str, Any]]:
+    with db.session() as s:
+        rows = s.scalars(select(LedgerRow).where(LedgerRow.org_id == p.org_id, LedgerRow.action_id == action_id)
+                         .order_by(LedgerRow.seq)).all()
+    if not rows:
+        raise HTTPException(404, "unknown action")
+    return [_entry_json(r) for r in rows]
+
 
 
 # ── confirm ───────────────────────────────────────────────────────────────────
@@ -399,8 +460,16 @@ def confirm_create(body: ConfirmCreate, p: Principal = Depends(principal),
     except Exception as e:
         raise HTTPException(422, f"bad descriptor: {e}") from e
     ids = {**({"id": body.id} if body.id else {}), **({"resume_token": body.resume_token} if body.resume_token else {})}
+    members = body.approver_members
+    if body.approvers and not members:  # resolve groups from the org policy when the SDK sent names only
+        with db.session() as s0:
+            pol0 = _active_policy(s0, p.org_id)
+        try:
+            members = load_doc(pol0.yaml if pol0 else DEFAULT_POLICY_YAML).resolve_approvers(body.approvers)
+        except Exception:
+            members = list(body.approvers)
     req = ConfirmRequest(action_id=body.action_id, descriptor=d, reasons=body.reasons, risk_tier=body.risk_tier,
-                         approvers=body.approvers, hold=body.hold, channel="cloud", **ids)
+                         approvers=body.approvers, hold=body.hold, approver_members=members, channel="cloud", **ids)
     with db.session() as s:
         store = DbStore(s, p.org_id)
         if store.get(req.id):
@@ -439,8 +508,12 @@ def confirm_decide(ref: str, body: DecideConfirm, p: Principal = Depends(approve
     dec = ConfirmDecision(status, body.approver or p.name, body.edits, body.note, channel="cloud")
     with db.session() as s:
         store = DbStore(s, p.org_id)
-        if store.get(ref) is None:
+        row = store.get(ref)
+        if row is None:
             raise HTTPException(404, "unknown request")
+        allowed = set(row.get("approver_members") or []) | set(row.get("approvers") or [])
+        if allowed and p.role != "admin" and not any(a.lower() in (dec.approver or "").lower() for a in allowed):
+            raise HTTPException(403, f"this request must be decided by one of: {', '.join(sorted(allowed))}")
         if not store.decide(ref, dec):
             raise HTTPException(409, "already decided")
         return store.get(ref)

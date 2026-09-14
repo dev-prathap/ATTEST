@@ -47,7 +47,8 @@ class DbStore:
                          action_id=request.action_id, channel=request.channel,
                          descriptor=request.descriptor.model_dump(mode="json"), reasons=request.reasons,
                          risk_tier=request.risk_tier, approvers=request.approvers, hold=request.hold,
-                         meta=meta or {}, requested_at=request.requested_at,
+                         approver_members=list(request.approver_members), meta=meta or {},
+                         requested_at=request.requested_at,
                          expires_at=(_now() + timedelta(seconds=ttl_s)) if ttl_s else None)
         self.s.add(row)
         self.s.flush()
@@ -100,7 +101,8 @@ class DbStore:
             return None
         return ConfirmRequest(action_id=row["action_id"], descriptor=ActionDescriptor.model_validate(row["descriptor"]),
                               reasons=row["reasons"], risk_tier=row["risk_tier"], approvers=row["approvers"],
-                              hold=row["hold"], channel=row["channel"] or "cloud", id=row["id"],
+                              hold=row["hold"], approver_members=row.get("approver_members") or [],
+                              channel=row["channel"] or "cloud", id=row["id"],
                               resume_token=row["resume_token"],
                               requested_at=datetime.fromisoformat(row["requested_at"]))
 
@@ -118,7 +120,8 @@ class DbStore:
     def row(r: ConfirmRow) -> dict[str, Any]:
         return {"id": r.id, "org_id": r.org_id, "resume_token": r.resume_token, "action_id": r.action_id,
                 "status": r.status, "channel": r.channel, "descriptor": r.descriptor, "reasons": r.reasons,
-                "risk_tier": r.risk_tier, "approvers": r.approvers, "hold": r.hold, "approver": r.approver,
+                "risk_tier": r.risk_tier, "approvers": r.approvers, "approver_members": r.approver_members or [],
+                "hold": r.hold, "approver": r.approver,
                 "edits": r.edits, "note": r.note, "meta": r.meta or {},
                 "requested_at": _aware(r.requested_at).isoformat() if r.requested_at else None,
                 "decided_at": _aware(r.decided_at).isoformat() if r.decided_at else None,

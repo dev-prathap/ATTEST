@@ -40,7 +40,8 @@ export default function SettingsPage() {
     catch (e) { setMsg(String(e)); }
   }
   async function saveSettings() {
-    const body = Object.fromEntries(Object.entries(settings).filter(([, v]) => v && !String(v).endsWith("…")));
+    const body: Record<string, unknown> = Object.fromEntries(Object.entries(settings).filter(([, v]) => v && !String(v).endsWith("…")));
+    if (body.retention_days) body.retention_days = Number(body.retention_days);
     try { setSettings(await api("/v1/settings", { method: "PUT", body: JSON.stringify(body) })); setMsg("settings saved"); } catch (e) { setMsg(String(e)); }
   }
 
@@ -63,7 +64,7 @@ export default function SettingsPage() {
       {me && (
         <>
           <div className="card">
-            <b>Policy</b> <span className="muted">v{policy.version} · first match wins · built-in rules R0–R4 run first</span>
+            <b>Policy</b> <span className="muted">v{policy.version} · first match wins · built-in rules R0–R4 run first · <code>groups:</code> for approver groups · <code>agents:</code> for per-agent overrides</span>
             <textarea value={policy.yaml} onChange={e => setPolicy({ ...policy, yaml: e.target.value })} style={{ minHeight: "14rem" }} />
             <button className="primary" onClick={savePolicy} disabled={me.key.role !== "admin"}>Save as new version</button>
           </div>
@@ -100,6 +101,7 @@ export default function SettingsPage() {
                 {field("slack_signing_secret", "Slack signing secret", true)}
                 {field("webhook_url", "Webhook URL for confirm requests")}
                 {field("webhook_secret", "Webhook signing secret", true)}
+                {field("retention_days", "Retention (days) — older rows are pruned behind a signed checkpoint")}
               </div>
               <button className="primary" onClick={saveSettings} style={{ marginTop: ".6rem" }}>Save</button>
             </div>

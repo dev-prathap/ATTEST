@@ -30,9 +30,13 @@ class ChainReport:
         return self.ok
 
 
-def verify(rows: list[dict[str, Any]]) -> ChainReport:
-    """`rows` in seq order, each with seq, prev_hash, payload_hash, hash, payload (dict)."""
+def verify(rows: list[dict[str, Any]], *, anchor: tuple[int, str] | None = None) -> ChainReport:
+    """`rows` in seq order, each with seq, prev_hash, payload_hash, hash, payload (dict).
+    `anchor=(seq, hash)` is a checkpoint: verification starts at seq+1 with prev=hash (rows before it were pruned)."""
     prev, expected_seq = GENESIS, 1
+    if anchor is not None:
+        prev, expected_seq = anchor[1], anchor[0] + 1
+        rows = [r for r in rows if r["seq"] > anchor[0]]
     for row in rows:
         seq = row["seq"]
         if seq != expected_seq:

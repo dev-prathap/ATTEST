@@ -24,6 +24,7 @@ class ConfirmRequest:
     risk_tier: str
     approvers: list[str] = field(default_factory=list)
     hold: bool = False
+    approver_members: list[str] = field(default_factory=list)
     channel: str = "console"
     id: str = field(default_factory=lambda: new_id("cfm"))
     resume_token: str = field(default_factory=lambda: new_id("rsm"))
@@ -37,7 +38,8 @@ class ConfirmRequest:
                 "action": d.qualified_name, "system": d.system, "verb": d.verb, "target": d.target,
                 "target_class": d.target_class, "agent": d.agent, "actor": d.actor, "run_id": d.run_id,
                 "params_preview": preview(d.params), "params_hash": d.params_hash, "reasons": self.reasons,
-                "risk_tier": self.risk_tier, "approvers": self.approvers, "hold": self.hold, "channel": self.channel,
+                "risk_tier": self.risk_tier, "approvers": self.approvers, "approver_members": self.approver_members,
+                "hold": self.hold, "channel": self.channel,
                 "requested_at": self.requested_at.isoformat()}
 
 
@@ -57,6 +59,14 @@ class ConfirmDecision:
     @property
     def pending(self) -> bool:
         return self.status == "pending"
+
+    def authorised(self, request: ConfirmRequest) -> bool:
+        """When the rule named approvers, the decider must be one of the resolved members (or a group name)."""
+        allowed = set(request.approver_members) | set(request.approvers)
+        if not allowed:
+            return True
+        who = (self.approver or "").lower()
+        return any(who == a.lower() or who.startswith(a.lower() + " ") or a.lower() in who for a in allowed)
 
     def to_dict(self) -> dict[str, Any]:
         return {"status": self.status, "approver": self.approver, "edits": self.edits, "note": self.note,

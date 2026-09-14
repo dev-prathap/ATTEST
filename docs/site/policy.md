@@ -23,7 +23,24 @@ policies:
 
 **Match keys:** `system`, `verb`, `target` (`internal | known | external | none`), `target_domain`, `actor`, `agent`,
 `risk` (`low | medium | high | very_high`), `action` (`gmail.send`, globs allowed). Values may be lists.
-**Decisions:** `act`, `ask`, `refuse`. **`approvers`** names who should see the confirm request.
+**Decisions:** `act`, `ask`, `refuse`. **`approvers`** names who may decide the confirm request — people or groups.
+
+## Approver groups and per-agent overrides
+
+```yaml
+groups:
+  finance-leads: [priya@acme.com, dev@acme.com]
+
+agents:
+  followup-agent@v3:            # evaluated before the global policies, only for this agent
+    policies:
+      - match: { system: hubspot, verb: update }
+        decision: act
+```
+
+Groups resolve onto the confirm request (`approver_members`) and appear on the Slack card. Attest Cloud refuses
+a decision from anyone outside the group (admins exempt); locally `ConfirmDecision.authorised(request)` gives
+custom gates the same check.
 
 ## Built-in rules (always first)
 

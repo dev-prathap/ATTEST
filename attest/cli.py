@@ -44,7 +44,11 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--note")
 
     e = sub.add_parser("export", help="export the ledger")
-    e.add_argument("--format", choices=["json", "csv"], default="json")
+    e.add_argument("--format", choices=["json", "csv", "ietf", "eu-ai-act"], default="json")
+
+    sub.add_parser("checkpoint", help="sign the current ledger head (ATTEST_LEDGER_KEY)")
+    pr = sub.add_parser("prune", help="retention: drop old rows, keeping a checkpoint so the chain still verifies")
+    pr.add_argument("--older-than-days", type=int, required=True)
 
     a = ap.parse_args(argv)
     if a.cmd == "serve":
@@ -73,6 +77,15 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "export":
         print(ledger.export(a.format))
         return 0
+    if a.cmd == "checkpoint":
+        cp = ledger.checkpoint()
+        print(json.dumps(cp.to_dict()) if cp else "empty ledger")
+        return 0
+    if a.cmd == "prune":
+        n = ledger.prune(older_than_days=a.older_than_days)
+        rep = ledger.verify_chain()
+        print(f"pruned {n} row(s); chain ok={rep.ok} entries={rep.checked}")
+        return 0 if rep.ok else 1
     store = PendingStore(a.ledger)
     if a.cmd == "pending":
         for row in store.pending():

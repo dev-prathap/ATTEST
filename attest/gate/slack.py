@@ -45,7 +45,8 @@ def blocks_for(request: ConfirmRequest, *, inbox_url: str | None = None) -> list
              "params: `" + json.dumps(d["params_preview"], default=str)[:300] + f"`  hash `{d['params_hash']}`"]
     lines += [f"• {r}" for r in d["reasons"]]
     if d["approvers"]:
-        lines.append("approvers: " + ", ".join(d["approvers"]))
+        members = d.get("approver_members") or []
+        lines.append("approvers: " + ", ".join(d["approvers"]) + (f" ({', '.join(members)})" if members else ""))
     if d["hold"]:
         lines.append("_needs input fixed before it can proceed (placeholders) — edit in the inbox_")
     blocks: list[dict[str, Any]] = [
