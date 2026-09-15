@@ -25,7 +25,17 @@ at = Attest(gate=StoreGate(PendingStore(".attest/ledger.sqlite"), notifiers=[
   the interaction URL to `POST /slack/interact` on `attest serve` or Attest Cloud (signature-verified).
 - **Web inbox** — `attest serve` (local) or the dashboard (cloud): approve, reject, or approve with JSON edits.
 - **Webhook** — your UI receives the signed request and answers `POST /confirm/{id}`.
+- **Microsoft Teams** — `TeamsNotifier(webhook_url, inbox_url=…, link_secret=…)` posts an Adaptive Card with
+  signed one-click Approve / Reject links (Teams webhooks cannot call back) and a link to the inbox.
+- **Email** — `EmailNotifier(to, sender=…, inbox_url=…, link_secret=…, smtp_host=…)` mails the approver group
+  (or a fallback list) the same one-click links. Set `ATTEST_LINK_SECRET` on `attest serve`.
 - **CLI** — `attest confirm <id> approve --edits '{"subject": "…"}'`.
+
+## Digests and anomaly flags
+
+`attest digest --since 24 [--slack-token … --slack-channel …]` (cloud: `GET /v1/digest`) summarises actions by
+agent, system, level and decision, lists every `unverified` row, and flags anomalies against the previous
+seven days: `new_action`, `volume_spike`, `unverified_spike`, `off_hours`, `external_burst`.
 
 Edits change what runs. First decision wins. Timeouts expire the request, which counts as a rejection.
 Every decision records `status`, `approver`, `channel`, `decided_at`, `edits`.

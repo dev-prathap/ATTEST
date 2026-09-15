@@ -32,6 +32,9 @@ nav:
       - API-only: entry/api.md
   - Gates & confirmations: gates.md
   - Read-back recipes: recipes.md
+  - Recipe automation & registry: automation.md
   - Ledger & exports: ledger.md
   - Attest Cloud: cloud.md
+  - Hardening: hardening.md
+  - SOC 2 readiness: soc2.md
   - CLI: cli.md

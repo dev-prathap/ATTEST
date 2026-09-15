@@ -52,6 +52,17 @@ def get_db(request: Request) -> Database:
 def principal(request: Request, authorization: str | None = Header(default=None),
               db: Database = Depends(get_db)) -> Principal:
     if not authorization or not authorization.lower().startswith("bearer "):
+        from attest_cloud import oidc
+        sess = oidc.read_session(request.cookies.get(oidc.COOKIE)) if request.cookies.get(oidc.COOKIE) else None
+        if sess:
+            with db.session() as s:
+                org = s.get(Org, sess["org_id"])
+                if org is None:
+                    raise HTTPException(401, "session org no longer exists")
+                s.expunge(org)
+            key = ApiKey(id="sso:" + sess["email"], org_id=org.id, name=sess["email"], role=sess["role"], prefix="sso",
+                         key_hash="")
+            return Principal(org, key)
         raise HTTPException(401, "missing bearer API key")
     raw = authorization.split(" ", 1)[1].strip()
     with db.session() as s:

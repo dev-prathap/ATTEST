@@ -20,6 +20,7 @@ attest-gateway = "attest.gateway.server:main"
 langgraph = ["langgraph>=0.2", "langchain-core>=0.3"]
 openai = ["openai-agents>=0.1"]
 slack = ["slack_sdk>=3.20", "slack_bolt>=1.18"]
+signing = ["cryptography>=42"]
 dev = [
     "pytest>=8",
     "pytest-asyncio>=0.23",
@@ -42,7 +43,7 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 
 [tool.ruff]
-line-length = 120
+line-length = 140
 target-version = "py311"
 
 [tool.ruff.lint]

@@ -114,6 +114,9 @@ class SettingsPut(BaseModel):
     nango_url: str | None = None
     nango_secret: str | None = None
     nango_connections: dict[str, dict[str, str]] | None = None
+    sso_domains: list[str] | None = None
+    sso_admins: list[str] | None = None
+    sso_default_role: str | None = Field(default=None, pattern="^(approver|admin|agent)$")
     slack_bot_token: str | None = None
     slack_channel: str | None = None
     slack_signing_secret: str | None = None
@@ -433,6 +436,21 @@ def ledger_prune(body: PruneIn, p: Principal = Depends(admin), db: Database = De
     return {"removed": removed, "chain_ok": rep.ok, "entries": rep.checked}
 
 
+@app.get("/v1/digest")
+def ledger_digest(p: Principal = Depends(principal), db: Database = Depends(get_db), since_hours: float = 24,
+                  agent: str | None = None) -> dict[str, Any]:
+    from datetime import timedelta
+
+    from attest.digest import digest
+    cutoff = datetime.now(UTC) - timedelta(hours=since_hours, days=7)
+    q = select(LedgerRow).where(LedgerRow.org_id == p.org_id, LedgerRow.created_at >= cutoff)
+    if agent:
+        q = q.where(LedgerRow.agent == agent)
+    with db.session() as s:
+        rows = s.scalars(q.order_by(LedgerRow.seq)).all()
+    return digest([_to_entry(r) for r in rows], since_hours=since_hours)
+
+
 @app.get("/v1/ledger/{action_id}")
 def ledger_action(action_id: str, p: Principal = Depends(principal),
                   db: Database = Depends(get_db)) -> list[dict[str, Any]]:
@@ -665,6 +683,54 @@ async def stripe_webhook(request: Request, db: Database = Depends(get_db)) -> di
     with db.session() as s:
         out = billing.apply_stripe_event(s, event)
     return {"ok": True, **out}
+
+
+# ── SSO (OIDC) ────────────────────────────────────────────────────────────────
+from fastapi.responses import RedirectResponse  # noqa: E402
+
+from attest_cloud import oidc  # noqa: E402
+
+
+@app.get("/auth/login")
+def auth_login(request: Request) -> Any:
+    if not oidc.enabled():
+        raise HTTPException(503, "SSO is not configured (OIDC_ISSUER, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, "
+                                 "OIDC_REDIRECT_URI, ATTEST_SESSION_SECRET)")
+    state = oidc.state_cookie_value()
+    resp = RedirectResponse(oidc.login_url(state, getattr(app.state, "oidc_fetch", None)), status_code=302)
+    resp.set_cookie("attest_oidc_state", state, httponly=True, samesite="lax", max_age=600)
+    return resp
+
+
+@app.get("/auth/callback")
+def auth_callback(request: Request, code: str = "", state: str = "", db: Database = Depends(get_db)) -> Any:
+    if not oidc.enabled():
+        raise HTTPException(503, "SSO is not configured")
+    if not state or request.cookies.get("attest_oidc_state") != state:
+        raise HTTPException(401, "bad state")
+    claims = oidc.exchange_code(code, getattr(app.state, "oidc_fetch", None))
+    org, role = oidc.resolve_org(db, claims["email"])
+    token = oidc.make_session(claims, org.id, role)
+    dest = os.environ.get("ATTEST_DASHBOARD_URL", "/")
+    resp = RedirectResponse(dest, status_code=302)
+    resp.set_cookie(oidc.COOKIE, token, httponly=True, samesite="lax", secure=dest.startswith("https"), max_age=8 * 3600)
+    resp.delete_cookie("attest_oidc_state")
+    return resp
+
+
+@app.get("/auth/me")
+def auth_me(request: Request) -> dict[str, Any]:
+    sess = oidc.read_session(request.cookies.get(oidc.COOKIE))
+    if not sess:
+        raise HTTPException(401, "no session")
+    return {k: v for k, v in sess.items() if k != "nonce"}
+
+
+@app.post("/auth/logout")
+def auth_logout() -> Any:
+    resp = RedirectResponse("/", status_code=302)
+    resp.delete_cookie(oidc.COOKIE)
+    return resp
 
 
 # ── settings ──────────────────────────────────────────────────────────────────

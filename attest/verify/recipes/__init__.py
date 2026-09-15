@@ -52,7 +52,8 @@ def all_recipes() -> list[Recipe]:
 
 
 def _load() -> None:
-    from attest.verify.recipes import gmail, google, hubspot, linear, m365, notion, slack  # noqa: F401
+    from attest.verify.recipes import declarative, gmail, google, hubspot, linear, m365, notion, slack  # noqa: F401
+    declarative.load_all()  # registry/recipes, $ATTEST_RECIPES_DIR, ~/.attest/recipes
 
 
 _load()

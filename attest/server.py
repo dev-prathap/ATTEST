@@ -61,7 +61,8 @@ class AttestServer:
     def __init__(self, store: PendingStore | None = None, ledger: SqliteLedger | None = None, *,
                  host: str = "127.0.0.1", port: int = 8321, token: str | None = None,
                  slack_signing_secret: str | None = None, slack_client: Any = None,
-                 on_decision: Any = None):
+                 on_decision: Any = None, link_secret: str | None = None):
+        self.link_secret = link_secret or os.environ.get("ATTEST_LINK_SECRET")
         self.store = store or PendingStore()
         self.ledger = ledger or SqliteLedger(self.store.path if self.store.path != ":memory:" else ":memory:")
         self.host, self.port = host, port
@@ -171,7 +172,27 @@ class _Handler(BaseHTTPRequestHandler):
                                     "problems": rep.problems})
         if path == "/healthz":
             return self._json(200, {"ok": True})
+        if path.startswith("/decide/"):  # one-click signed links from email / Teams cards
+            return self._decide_link(path, q)
         self._json(404, {"error": "not found"})
+
+    def _decide_link(self, path: str, q: dict[str, list[str]]) -> None:
+        from attest.gate.links import verify_link
+        s = self.server_ref
+        parts = path.strip("/").split("/")
+        if len(parts) != 3 or parts[2] not in ("approved", "rejected") or not s.link_secret:
+            return self._json(404, {"error": "not found"})
+        rid, status = parts[1], parts[2]
+        try:
+            exp, sig = int(q.get("exp", ["0"])[0]), q.get("sig", [""])[0]
+        except ValueError:
+            return self._json(400, {"error": "bad link"})
+        if not verify_link(s.link_secret, rid, status, exp, sig):
+            return self._html("<h1>Link invalid or expired</h1><p>Open the inbox to decide.</p>")
+        code, out = s.decide(rid, {"status": status, "approver": "one-click-link"})
+        msg = {200: f"<h1>{status.title()}</h1><p>Recorded. You can close this tab.</p>",
+               409: "<h1>Already decided</h1>", 404: "<h1>Unknown request</h1>"}.get(code, "<h1>Error</h1>")
+        return self._html(msg)
 
     def do_POST(self) -> None:  # noqa: N802
         s = self.server_ref

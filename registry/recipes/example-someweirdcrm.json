@@ -1,0 +1,8 @@
+[
+  {
+    "name": "someweirdcrm.lead", "system": "someweirdcrm", "verbs": ["create", "update"], "target": "lead",
+    "read": {"method": "GET", "url": "https://api.someweirdcrm.io/v2/leads/{id}", "id": "$.id|$params.lead_id"},
+    "compare": {"fields": ["name", "email", "stage"], "exists": true},
+    "source": "community", "version": 1
+  }
+]

@@ -1,0 +1,20 @@
+# Attest on-prem: single host, SQLite ledger on a volume, no external services. For Postgres use ../docker-compose.yml.
+services:
+  api:
+    build: { context: ../.., dockerfile: deploy/Dockerfile.api }
+    environment:
+      DATABASE_URL: sqlite:////data/attest-cloud.sqlite
+      ATTEST_CLOUD_BOOTSTRAP_TOKEN: ${ATTEST_CLOUD_BOOTSTRAP_TOKEN:-change-me}
+      ATTEST_SIGNING_KEY: ${ATTEST_SIGNING_KEY:-change-me-signing}
+      ATTEST_CORS_ORIGINS: ${ATTEST_CORS_ORIGINS:-http://localhost:3400}
+      ATTEST_RATE_LIMIT: "600"
+      # SSO (optional): OIDC_ISSUER, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_REDIRECT_URI, ATTEST_SESSION_SECRET
+    volumes: ["attest-data:/data"]
+    ports: ["8400:8400"]
+  dashboard:
+    build: { context: ../.., dockerfile: deploy/Dockerfile.dashboard }
+    environment: { NEXT_PUBLIC_ATTEST_CLOUD_URL: "http://localhost:8400" }
+    ports: ["3400:3400"]
+    depends_on: [api]
+volumes:
+  attest-data:

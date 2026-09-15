@@ -7,7 +7,10 @@ attest verify                                      # hash chain
 attest pending
 attest confirm <id|token> approve|reject [--edits '{"k": "v"}'] [--approver me] [--note …]
 attest export --format json|csv
-attest-mcp --upstream "<cmd>" [--server gmail] [--mode block|pending|auto] …
+attest digest [--since 24] [--json] [--slack-token … --slack-channel …]
+attest checkpoint · attest anchor --git|--file|--url [--verify] · attest prune --older-than-days N
+attest recipes list | propose --openapi|--mcp-tools … --system X [--llm] | install <file>
+attest gateway … (= attest-gateway) · attest mcp-proxy … (= attest-mcp) · attest-mcp-server
 ```
 
 Environment: `ATTEST_LEDGER`, `ATTEST_POLICY`, `ATTEST_AUTO_APPROVE`, `ATTEST_AGENT`, `ATTEST_ACTOR`,
