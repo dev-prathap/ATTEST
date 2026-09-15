@@ -1,6 +1,6 @@
 # Vercel AI SDK — via the HTTP API
 
-**Prefer the [TypeScript SDK](typescript.md)** (`@attest/sdk/adapters/vercel`). The HTTP-API approach below works from any runtime without the SDK; wrap tools with two calls to Attest Cloud: `POST /v1/decide`
+**Prefer the [TypeScript SDK](typescript.md)** (`@attestlayer/sdk/adapters/vercel`). The HTTP-API approach below works from any runtime without the SDK; wrap tools with two calls to Attest Cloud: `POST /v1/decide`
 before the tool runs and `POST /v1/attest` after. Confirmations use `POST /v1/confirm` + polling.
 
 ```ts

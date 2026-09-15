@@ -1,7 +1,10 @@
 [project]
-name = "attest"
+name = "attestlayer"
 version = "0.1.0"
-description = "Proof layer for AI agents: decide, gate, verify, attest."
+description = "Attest — proof layer for AI agents: decide, gate, verify, attest."
+authors = [{ name = "Prathap" }]
+keywords = ["ai-agents", "audit", "human-in-the-loop", "verification", "langgraph", "mcp"]
+classifiers = ["Programming Language :: Python :: 3", "License :: OSI Approved :: MIT License", "Topic :: Security", "Topic :: Software Development :: Libraries"]
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
@@ -9,6 +12,11 @@ dependencies = [
     "pydantic>=2.7",
     "pyyaml>=6.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/dev-pratapk/ATTEST"
+Documentation = "https://dev-pratapk.github.io/ATTEST/"
+Repository = "https://github.com/dev-pratapk/ATTEST"
 
 [project.scripts]
 attest = "attest.cli:main"

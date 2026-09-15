@@ -29,7 +29,7 @@ wrapper, or a zero-code MCP proxy (`attest-mcp --upstream <your server>`) that v
 `get_issue`. An app it has never seen (`POST api.someweirdcrm.io/v2/leads`) is still recorded, decided, gated,
 and — via `GET /v2/leads/{id}` — verified.
 
-Repo: https://github.com/dev-pratapk/ATTEST · Docs: <docs url> · `pip install attest`
+Repo: https://github.com/dev-pratapk/ATTEST · Docs: <docs url> · `pip install attestlayer`
 
 What I'd love feedback on: the verification ladder's honesty rules (a check that *can't* run degrades, only a
 contradiction is `unverified`), the read-back recipes you'd want next, and whether the MCP proxy approach

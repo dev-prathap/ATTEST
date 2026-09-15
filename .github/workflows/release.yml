@@ -1,0 +1,47 @@
+name: release
+# Tag a version to publish everything:   git tag v0.1.0 && git push --tags
+on:
+  push:
+    tags: ["v*"]
+permissions:
+  contents: write
+  id-token: write      # PyPI trusted publishing + npm provenance
+  packages: write      # GHCR images
+jobs:
+  pypi:
+    runs-on: ubuntu-latest
+    environment: pypi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv venv -p 3.12 && uv pip install -e ".[dev]" -e "./cloud[dev]" && .venv/bin/pytest -q && (cd cloud && ../.venv/bin/pytest -q)
+      - run: uv build
+      - uses: pypa/gh-action-pypi-publish@release/v1      # trusted publisher: configure on pypi.org (see DEPLOY.md)
+  npm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, registry-url: "https://registry.npmjs.org" }
+      - run: cd packages/attest-ts && npm install --no-audit --no-fund && npm test && npm run build
+      - run: cd packages/attest-ts && npm publish --provenance --access public
+        env: { NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN }}" }
+  images:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with: { registry: ghcr.io, username: "${{ github.actor }}", password: "${{ secrets.GITHUB_TOKEN }}" }
+      - id: v
+        run: echo "tag=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@v6
+        with: { context: ., file: deploy/Dockerfile.api, push: true, tags: "ghcr.io/dev-pratapk/attest-api:${{ steps.v.outputs.tag }},ghcr.io/dev-pratapk/attest-api:latest" }
+      - uses: docker/build-push-action@v6
+        with: { context: ., file: deploy/Dockerfile.dashboard, push: true, tags: "ghcr.io/dev-pratapk/attest-dashboard:${{ steps.v.outputs.tag }},ghcr.io/dev-pratapk/attest-dashboard:latest" }
+  github-release:
+    runs-on: ubuntu-latest
+    needs: [pypi, npm, images]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: softprops/action-gh-release@v2
+        with: { generate_release_notes: true }

@@ -1,10 +1,10 @@
 [project]
-name = "attest-cloud"
+name = "attestlayer-cloud"
 version = "0.1.0"
 description = "Attest Cloud v0: hosted ledger, confirm inbox, policies, agents & API keys."
 requires-python = ">=3.11"
 dependencies = [
-    "attest",
+    "attestlayer",
     "fastapi>=0.110",
     "uvicorn[standard]>=0.29",
     "sqlalchemy>=2.0",

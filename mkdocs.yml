@@ -1,5 +1,7 @@
 site_name: Attest
 site_description: Prove what your AI agent actually did. Decide · Gate · Verify · Attest.
+site_url: https://dev-pratapk.github.io/ATTEST/
+repo_url: https://github.com/dev-pratapk/ATTEST
 docs_dir: docs/site
 site_dir: site
 theme:

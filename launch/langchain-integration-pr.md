@@ -12,7 +12,7 @@ hash-chained ledger. It never executes the action — your tool does.
 ### Installation
 
 ```bash
-pip install "attest[langgraph]"
+pip install "attestlayer[langgraph]"
 ```
 
 ### Wrap tools

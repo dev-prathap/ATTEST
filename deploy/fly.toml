@@ -1,0 +1,19 @@
+# Fly.io sample for the API (dashboard can be a static/Next app on Vercel or a second Fly app).
+#   fly launch --no-deploy --copy-config --name attest-api   ·   fly postgres create   ·   fly secrets set …   ·   fly deploy
+app = "attest-api"
+primary_region = "sin"
+[build]
+  dockerfile = "Dockerfile.api"
+[env]
+  ATTEST_CORS_ORIGINS = "https://app.attestlayer.dev"
+  ATTEST_RATE_LIMIT = "600"
+[http_service]
+  internal_port = 8400
+  force_https = true
+  auto_stop_machines = false
+  min_machines_running = 1
+  [http_service.checks]
+    [[http_service.checks]]
+      path = "/healthz"
+      interval = "30s"
+      timeout = "5s"

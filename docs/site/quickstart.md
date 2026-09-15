@@ -1,7 +1,7 @@
 # Quickstart — 5 minutes, no cloud
 
 ```bash
-pip install attest          # from the repo today: pip install -e ".[dev]"
+pip install attestlayer
 ```
 
 ## 1. Wrap one function

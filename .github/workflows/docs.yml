@@ -1,0 +1,22 @@
+name: docs-pages
+on:
+  push:
+    branches: [main]
+    paths: ["docs/site/**", "mkdocs.yml", ".github/workflows/docs.yml"]
+permissions: { contents: read, pages: write, id-token: write }
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: uv venv -p 3.12 && uv pip install mkdocs mkdocs-material && .venv/bin/mkdocs build --strict
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: site }
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: { name: github-pages, url: "${{ steps.d.outputs.page_url }}" }
+    steps:
+      - id: d
+        uses: actions/deploy-pages@v4

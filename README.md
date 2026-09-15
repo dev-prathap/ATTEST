@@ -20,8 +20,10 @@ Attest is **not** an agent framework, not a connector platform, not a guardrail 
 
 ## Quickstart
 
+Brand **Attest** · PyPI `attestlayer` · npm `@attestlayer/sdk` · deploy runbook in [DEPLOY.md](./DEPLOY.md).
+
 ```bash
-pip install -e ".[dev]"            # PyPI name pending the naming decision
+pip install attestlayer              # brand: Attest · import attest · CLI attest
 ```
 
 ```python
@@ -46,6 +48,7 @@ Full docs: `mkdocs serve` → [docs/site](./docs/site/quickstart.md).
 | [docs/site/](./docs/site/) | documentation site (mkdocs) · [docs/](./docs/) — product docs 01–08 · [docs/notes](./docs/notes/do-extraction.md) — DO / DeerFlow extraction |
 | [deploy/](./deploy/) | Dockerfiles + compose (Postgres, API :8400, dashboard :3400) |
 | [launch/](./launch/) | Show HN, blog drafts, LangChain integration PR draft |
+| [DEPLOY.md](./DEPLOY.md) · [CHANGELOG.md](./CHANGELOG.md) | release (`git tag vX.Y.Z` → PyPI, npm, GHCR, Pages) and hosting runbook |
 
 ```bash
 pytest -q && (cd cloud && pytest -q)                   # 273 + 21 tests

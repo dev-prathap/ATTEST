@@ -1,14 +1,14 @@
-# @attest/sdk (TypeScript)
+# @attestlayer/sdk (TypeScript)
 
 Prove what your AI agent actually did. Decide · Gate · Verify · Attest — same contract, ledger format and hash
 chain as the Python SDK (a ledger written by one verifies with the other).
 
 ```bash
-npm install @attest/sdk          # from the repo today: cd packages/attest-ts && npm install && npm run build
+npm install @attestlayer/sdk          # from the repo today: cd packages/attest-ts && npm install && npm run build
 ```
 
 ```ts
-import { Attest } from "@attest/sdk";
+import { Attest } from "@attestlayer/sdk";
 
 const at = new Attest({ agent: "followup-agent@v3", actor: "ram@acme.com", readers: { gmail: process.env.GMAIL_TOKEN! } });
 
@@ -28,10 +28,10 @@ await sendEmail({ to: "arun@newco.com", subject: "Proposal", body: "…" });
   `RecipeDriver` for Gmail / Slack / HubSpot over the agent's token. Contradiction ⇒ `unverified`.
 - **Gates** — `ConsoleGate`, `AutoGate`, `StoreGate` (block / pending on a JSON file), `WebhookNotifier`,
   cloud confirmations via `Attest.cloud({ url, apiKey })`. `fn.resume(token)` after approval.
-- **Adapters** — `@attest/sdk/adapters/vercel` (`attestedTools`), `/langchain` (`wrapTools`), `/mastra` (`wrapTools`).
+- **Adapters** — `@attestlayer/sdk/adapters/vercel` (`attestedTools`), `/langchain` (`wrapTools`), `/mastra` (`wrapTools`).
 
 ```ts
-import { attestedTools } from "@attest/sdk/adapters/vercel";
+import { attestedTools } from "@attestlayer/sdk/adapters/vercel";
 const tools = attestedTools(at, { send_email, update_deal }, { send_email: { system: "gmail", verb: "send", target: "to" } });
 ```
 

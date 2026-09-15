@@ -20,7 +20,7 @@ Milestones: **M1** first end-to-end verified action (end P1.2) · **M2** OSS lau
 | --- | --- | --- | --- |
 | P0.1 | DO repo: `git init`, `.gitignore` (.env, .fernet_key, .oauth_pkce.json, _ref-*, node_modules, .venv), commit, push to private GitHub | Claude | **Done 2026-09-12** — `dev-pratapk/DO`, commit `df85d52`, 1,642 files, secrets and `_ref-*` excluded |
 | P0.2 | ATTEST repo: first commit, private remote | Claude | **Done 2026-09-12** — `dev-pratapk/ATTEST` |
-| P0.3 | Confirm locked decisions (07): name, wrapper model, Python-first, Gmail/Slack/HubSpot first | Founder | 07 updated |
+| P0.3 | Confirm locked decisions (07): name, wrapper model, Python-first, Gmail/Slack/HubSpot first | Founder | **Name locked 2026-09-15** (Attest / `attestlayer`); other decisions unchanged since 07 |
 | P0.4 | GitHub org, domain, test Slack workspace, test Gmail/HubSpot accounts | Founder | credentials in a local `.env` |
 | P0.5 | Claude: read DO `app/brain/execution/policy.py`, `app/brain/execution/actions.py` (ref resolver), `app/brain/connectors/providers/template.py` (VERIFY_WITH, `_auto_pair`, verb classifier), `app/brain/connectors/providers/google.py` (`verify()`), `connectors/registry.py`, `connectors/capabilities.py`, `schema.sql`; DeerFlow receipt middleware; write extraction notes | Claude | **Done 2026-09-12** — [notes/do-extraction.md](./notes/do-extraction.md) |
 

@@ -1,7 +1,7 @@
 # LangGraph / LangChain
 
 ```bash
-pip install "attest[langgraph]"
+pip install "attestlayer[langgraph]"
 ```
 
 ```python

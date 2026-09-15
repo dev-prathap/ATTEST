@@ -61,4 +61,4 @@ code. Reviewed recipes for Gmail, Slack and HubSpot; a convention driver for any
 /{id}`); MCP tool pairs (`create_issue` ⇒ `get_issue`). And a hash-chained ledger that stores hashes and
 previews, never bodies.
 
-`pip install attest`. Wrap one function. Look at the level next to it.
+`pip install attestlayer`. Wrap one function. Look at the level next to it.

@@ -1,7 +1,7 @@
 # OpenAI Agents SDK
 
 ```bash
-pip install "attest[openai]"
+pip install "attestlayer[openai]"
 ```
 
 ```python

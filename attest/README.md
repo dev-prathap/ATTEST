@@ -119,7 +119,7 @@ create_agent(model, tools, middleware=[attest_lg.AttestMiddleware(at, mapping=ma
 ```
 
 Refusals and rejections come back to the model as an error ToolMessage; the ledger records them either way.
-Unmapped tools are inferred from their name. `pip install "attest[langgraph]"`.
+Unmapped tools are inferred from their name. `pip install "attestlayer[langgraph]"`.
 
 ## Gate modes: Slack, web inbox, webhook, LangGraph interrupt, MCP pending
 
@@ -188,7 +188,7 @@ agent = Agent(name="followup", tools=tools)
 ```
 
 Same behaviour as LangGraph: refusals / rejections return as tool errors; with a pending gate the tool returns a
-resume token and `await attest_oa.resume(at, token)` executes after approval. `pip install "attest[openai]"`.
+resume token and `await attest_oa.resume(at, token)` executes after approval. `pip install "attestlayer[openai]"`.
 
 ## Verification levels
 
