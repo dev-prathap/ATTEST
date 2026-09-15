@@ -62,5 +62,18 @@ cd deploy && cp .env.example .env && docker compose up  # cloud + dashboard
 - Open-source SDK (MIT). Paid cloud (ledger, confirm inbox, policies, exports).
 - Developer-led, self-serve, USD. No enterprise sales motion in year one.
 
+## Install from registries
+
+| where | how |
+| --- | --- |
+| PyPI | `pip install attestlayer` → `attest`, `attest-mcp`, `attest-mcp-server`, `attest-gateway`, `attestlayer` |
+| MCP Registry | `io.github.dev-pratapk/attest` (verify server) · `io.github.dev-pratapk/attest-proxy` (zero-code proxy) — `uvx attestlayer` |
+| Claude Desktop / Smithery | MCPB bundle from `mcp/mcpb` (`mcpb pack mcp/mcpb`) |
+| npm | `npm install @attestlayer/sdk` |
+| Docker | `ghcr.io/dev-pratapk/attest-api`, `ghcr.io/dev-pratapk/attest-dashboard` |
+
+<!-- mcp-name: io.github.dev-pratapk/attest -->
+<!-- mcp-name: io.github.dev-pratapk/attest-proxy -->
+
 ## Lineage
 Attest is extracted from two working codebases: **DO** (policy engine, read-back verification pairs, evidence ledger, Nango auth) and **DeerFlow** (tool receipts, verification patterns, MCP/IM channel adapters). Nothing here is theoretical — every core mechanism already runs against real Gmail, Slack, HubSpot, Notion, Linear and Google Workspace.

@@ -19,6 +19,7 @@ Documentation = "https://dev-pratapk.github.io/ATTEST/"
 Repository = "https://github.com/dev-pratapk/ATTEST"
 
 [project.scripts]
+attestlayer = "attest.mcp.launcher:main"
 attest = "attest.cli:main"
 attest-mcp = "attest.mcp.proxy:main"
 attest-mcp-server = "attest.mcp.server:main"

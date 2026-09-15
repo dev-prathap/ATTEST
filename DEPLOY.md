@@ -46,6 +46,25 @@ Users add to their MCP config (no server to host — it runs on their machine wi
 Approvals for `--mode block` come from `attest serve` (local inbox) or Attest Cloud; `--mode pending` returns a
 resume token. Ship the `skills/verified-actions/SKILL.md` to skills marketplaces so coding agents know the tools.
 
+## 2b. MCP registries (after the PyPI release)
+
+Listing files live in `mcp/`; the README carries the `mcp-name:` ownership markers the registry checks on PyPI.
+
+```bash
+brew install mcp-publisher                       # or the curl one-liner in the registry quickstart
+mcp-publisher login github                       # namespace io.github.dev-pratapk/*
+mcp-publisher validate mcp/server.json && mcp-publisher publish mcp/server.json          # io.github.dev-pratapk/attest
+mcp-publisher validate mcp/server-proxy.json && mcp-publisher publish mcp/server-proxy.json   # …/attest-proxy
+```
+Bump `version` in both files with each release (tests assert they match `pyproject.toml`).
+
+**Claude Desktop / Smithery (MCPB bundle):** `npx @anthropic-ai/mcpb pack mcp/mcpb attest.mcpb` → attach the
+bundle to the GitHub release (`softprops/action-gh-release` already publishes release assets; add the file) and
+`smithery mcp publish ./attest.mcpb -n attestlayer/attest`.
+
+**Glama:** `glama.json` at the repo root lists the maintainer; claim the server at glama.ai/mcp after the repo is
+indexed. **Cursor / other directories:** point at the MCP Registry entry.
+
 ## 3. Attest Cloud (API + dashboard)
 
 **Option A — one VPS with Docker Compose** (simplest; Hetzner / DigitalOcean / Lightsail):

@@ -1,0 +1,107 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.dev-pratapk/attest",
+  "title": "Attest",
+  "description": "Decide by policy, gate behind a human, verify by read-back, record a hash-chained ledger.",
+  "websiteUrl": "https://dev-pratapk.github.io/ATTEST/",
+  "repository": {
+    "url": "https://github.com/dev-pratapk/ATTEST",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "attestlayer",
+      "version": "0.1.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "ATTEST_POLICY",
+          "description": "Path to a policy YAML (defaults to ./attest.yaml or the built-in default)",
+          "isRequired": false,
+          "format": "filepath"
+        },
+        {
+          "name": "ATTEST_LEDGER",
+          "description": "Ledger SQLite path (default .attest/ledger.sqlite)",
+          "isRequired": false,
+          "format": "filepath",
+          "default": ".attest/ledger.sqlite"
+        },
+        {
+          "name": "ATTEST_AUTO_APPROVE",
+          "description": "Set to 1 to approve every confirm request (development only)",
+          "isRequired": false,
+          "format": "boolean"
+        },
+        {
+          "name": "ATTEST_CONFIRM_TIMEOUT",
+          "description": "Seconds attest_confirm waits for a human (default 900)",
+          "isRequired": false,
+          "format": "number",
+          "default": "900"
+        },
+        {
+          "name": "GMAIL_TOKEN",
+          "description": "Google OAuth access token with gmail.readonly — enables Gmail read-back",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "GOOGLE_TOKEN",
+          "description": "Google OAuth access token — enables Calendar / Drive / Docs / Sheets read-back",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "SLACK_BOT_TOKEN",
+          "description": "Slack bot token (xoxb-…) with channels:history, channels:read — enables Slack read-back",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "HUBSPOT_TOKEN",
+          "description": "HubSpot private-app token — enables HubSpot read-back",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "NOTION_TOKEN",
+          "description": "Notion integration token — enables Notion read-back",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "LINEAR_API_KEY",
+          "description": "Linear API key — enables Linear read-back",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "GRAPH_TOKEN",
+          "description": "Microsoft Graph token — enables Outlook / Teams read-back",
+          "isRequired": false,
+          "isSecret": true
+        }
+      ]
+    }
+  ],
+  "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "tools": [
+        "attest_decide",
+        "attest_confirm",
+        "attest_confirm_status",
+        "attest_record",
+        "attest_verify",
+        "attest_ledger"
+      ],
+      "skill": "https://github.com/dev-pratapk/ATTEST/blob/main/skills/verified-actions/SKILL.md"
+    }
+  }
+}

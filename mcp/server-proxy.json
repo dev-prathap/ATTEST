@@ -1,0 +1,88 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.dev-pratapk/attest-proxy",
+  "title": "Attest proxy",
+  "description": "Zero-code proxy: policy, human gate, tool-pair read-back and a hash-chained ledger for any MCP server.",
+  "websiteUrl": "https://dev-pratapk.github.io/ATTEST/entry/mcp/",
+  "repository": {
+    "url": "https://github.com/dev-pratapk/ATTEST",
+    "source": "github"
+  },
+  "version": "0.1.0",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "registryBaseUrl": "https://pypi.org",
+      "identifier": "attestlayer",
+      "version": "0.1.0",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "packageArguments": [
+        {
+          "type": "positional",
+          "value": "proxy",
+          "valueHint": "proxy",
+          "description": "Run the MCP proxy"
+        },
+        {
+          "type": "named",
+          "name": "--upstream",
+          "description": "Command that starts the real MCP server, e.g. \"npx -y @modelcontextprotocol/server-gmail\"",
+          "isRequired": true,
+          "valueHint": "command"
+        },
+        {
+          "type": "named",
+          "name": "--server",
+          "description": "System name for tools without a prefix (gmail, slack, hubspot, …)",
+          "isRequired": false,
+          "valueHint": "system"
+        },
+        {
+          "type": "named",
+          "name": "--mode",
+          "description": "block (wait for the inbox / Slack), pending (return a resume token), auto (dev)",
+          "isRequired": false,
+          "default": "block",
+          "choices": [
+            "block",
+            "pending",
+            "auto"
+          ]
+        }
+      ],
+      "environmentVariables": [
+        {
+          "name": "ATTEST_POLICY",
+          "description": "Path to a policy YAML",
+          "isRequired": false,
+          "format": "filepath"
+        },
+        {
+          "name": "ATTEST_LEDGER",
+          "description": "Ledger SQLite path (default .attest/ledger.sqlite)",
+          "isRequired": false,
+          "format": "filepath"
+        },
+        {
+          "name": "ATTEST_INBOX_URL",
+          "description": "URL of the confirm inbox (attest serve) linked from Slack cards",
+          "isRequired": false
+        },
+        {
+          "name": "SLACK_BOT_TOKEN",
+          "description": "Slack bot token for confirm cards",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "ATTEST_SLACK_CHANNEL",
+          "description": "Slack channel for confirm cards",
+          "isRequired": false
+        }
+      ]
+    }
+  ]
+}
