@@ -71,7 +71,8 @@ class FileAnchor:
             except json.JSONDecodeError:
                 continue
             if rec.get("scope") == cp.scope and rec.get("seq") == cp.seq and rec.get("hash") == cp.hash:
-                return AnchorReceipt(self.name, cp.scope, cp.seq, cp.hash, rec.get("signed_at", ""), rec.get("anchored_at", ""), ref=f"line:{i}")
+                return AnchorReceipt(self.name, cp.scope, cp.seq, cp.hash, rec.get("signed_at", ""), rec.get("anchored_at", ""),
+                                     ref=f"line:{i}")
         return None
 
 
@@ -109,7 +110,8 @@ class HttpAnchor:
                 out = json.loads(r.read() or b"null")
         if not out:
             return None
-        return AnchorReceipt(self.name, cp.scope, cp.seq, cp.hash, out.get("signed_at", cp.signed_at), out.get("anchored_at", ""), ref=str(out.get("id", "")))
+        return AnchorReceipt(self.name, cp.scope, cp.seq, cp.hash, out.get("signed_at", cp.signed_at), out.get("anchored_at", ""),
+                             ref=str(out.get("id", "")))
 
 
 class GitAnchor:

@@ -31,10 +31,13 @@ class EmailNotifier:
                  "", *[f"- {r}" for r in d["reasons"]], "", f"Approve: {approve}", f"Reject:  {reject}",
                  f"Edit / details: {self.inbox_url.rstrip('/')}/#{request.id}", "", f"request {request.id}"]
         msg.set_content("\n".join(lines))
-        msg.add_alternative(f"""<p>An agent wants to run <b>{d['action']}</b> → <code>{d['target'] or '-'}</code> (risk {d['risk_tier']}).</p>
-<ul>{''.join(f'<li>{r}</li>' for r in d['reasons'])}</ul><pre>{d['params_preview']}</pre>
-<p><a href="{approve}">Approve</a> &nbsp; <a href="{reject}">Reject</a> &nbsp; <a href="{self.inbox_url.rstrip('/')}/#{request.id}">Edit / details</a></p>
-<p><small>request {request.id}</small></p>""", subtype="html")
+        inbox = f"{self.inbox_url.rstrip('/')}/#{request.id}"
+        reasons_html = "".join(f"<li>{r}</li>" for r in d["reasons"])
+        msg.add_alternative(
+            f"<p>An agent wants to run <b>{d['action']}</b> → <code>{d['target'] or '-'}</code> (risk {d['risk_tier']}).</p>"
+            f"<ul>{reasons_html}</ul><pre>{d['params_preview']}</pre>"
+            f'<p><a href="{approve}">Approve</a> &nbsp; <a href="{reject}">Reject</a> &nbsp; <a href="{inbox}">Edit / details</a></p>'
+            f"<p><small>request {request.id}</small></p>", subtype="html")
         return msg
 
     def notify(self, request: ConfirmRequest, store: Any) -> None:

@@ -37,7 +37,8 @@ def from_openapi(spec: Any, system: str) -> list[dict[str, Any]]:
             candidates.append((path, "update", ["update"]))
         for tpl, kind, verbs in candidates:
             last = _PARAM.findall(tpl)[-1]
-            resource = [s for s in path.split("/") if s and not _PARAM.match(s)][-1] if [s for s in path.split("/") if s and not _PARAM.match(s)] else "record"
+            plain = [s for s in path.split("/") if s and not _PARAM.match(s)]
+            resource = plain[-1] if plain else "record"
             fields = _response_fields(ops, paths.get(tpl, {}))
             out.append({
                 "name": f"{system}.{resource.rstrip('s')}.{kind}", "system": system, "verbs": verbs, "target": resource.rstrip("s"),
@@ -83,7 +84,8 @@ def from_mcp_tools(tools: list[dict[str, Any]], system: str) -> list[dict[str, A
         if toks[0] not in ("create", "update", "add", "upsert") or len(toks) < 2:
             continue
         rest = "_".join(toks[1:])
-        getter = next((by_name.get(g) for g in (f"get_{rest}", f"fetch_{rest}", f"read_{rest}", f"retrieve_{rest}") if by_name.get(g)), None)
+        getter_names = (f"get_{rest}", f"fetch_{rest}", f"read_{rest}", f"retrieve_{rest}")
+        getter = next((by_name.get(g) for g in getter_names if by_name.get(g)), None)
         if not getter:
             continue
         req = list((getter.get("inputSchema") or {}).get("required") or [])

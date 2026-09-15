@@ -52,4 +52,5 @@ def sign_checkpoint(cp: Any, private_key_b64: str) -> Any:
 def verify_checkpoint(cp: Any, public_key_b64: str) -> bool:
     from attest.ledger.checkpoints import _message
     d = cp.to_dict() if hasattr(cp, "to_dict") else cp
-    return bool(d.get("signature")) and verify(_message(d["scope"], int(d["seq"]), d["hash"], d["signed_at"]), d["signature"], public_key_b64)
+    msg = _message(d["scope"], int(d["seq"]), d["hash"], d["signed_at"])
+    return bool(d.get("signature")) and verify(msg, d["signature"], public_key_b64)

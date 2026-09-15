@@ -64,7 +64,8 @@ def anomalies(window: list[LedgerEntry], baseline: list[LedgerEntry], *, baselin
     if unv_w >= 3 and unv_w > 2 * max(unv_b, 1):
         flags.append({"flag": "unverified_spike", "detail": f"{unv_w} unverified rows vs {unv_b:.1f}/day baseline"})
     ext_w = sum(1 for e in window if e.target_class == "external" and e.descriptor.get("verb") in ("send", "reply", "share"))
-    ext_b = sum(1 for e in baseline if e.target_class == "external" and e.descriptor.get("verb") in ("send", "reply", "share")) / max(baseline_days, 1)
+    ext_base = sum(1 for e in baseline if e.target_class == "external" and e.descriptor.get("verb") in ("send", "reply", "share"))
+    ext_b = ext_base / max(baseline_days, 1)
     if ext_w >= 5 and ext_w > 3 * max(ext_b, 1):
         flags.append({"flag": "external_burst", "detail": f"{ext_w} external sends vs {ext_b:.1f}/day baseline"})
     return flags

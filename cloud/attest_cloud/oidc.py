@@ -113,7 +113,8 @@ def resolve_org(db: Database, email: str) -> tuple[Org, str]:
             st = org.settings or {}
             domains = {registered_domain(x) for x in ([org.domain] if org.domain else []) + list(st.get("sso_domains") or [])}
             if dom in domains:
-                role = "admin" if email.lower() in {a.lower() for a in st.get("sso_admins") or []} else st.get("sso_default_role", "approver")
+                admins = {a.lower() for a in st.get("sso_admins") or []}
+                role = "admin" if email.lower() in admins else st.get("sso_default_role", "approver")
                 s.expunge(org)
                 return org, role
     raise HTTPException(403, f"no organisation accepts sign-ins from {dom}")
