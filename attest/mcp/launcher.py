@@ -13,6 +13,9 @@ import sys
 
 def main(argv: list[str] | None = None) -> None:
     args = sys.argv[1:] if argv is None else list(argv)
+    if args and args[0] in ("-h", "--help", "help"):
+        print(__doc__)
+        return
     cmd = args[0] if args and not args[0].startswith("-") else "server"
     rest = args[1:] if args and not args[0].startswith("-") else args
     if cmd == "server":
