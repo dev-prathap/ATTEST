@@ -25,6 +25,13 @@ jobs:
       - uses: astral-sh/setup-uv@v3
       - run: uv venv -p 3.12 && uv pip install mkdocs mkdocs-material
       - run: .venv/bin/mkdocs build --strict
+  typescript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: cd packages/attest-ts && npm install --no-audit --no-fund && npm run lint && npm test && npm run build
   dashboard:
     runs-on: ubuntu-latest
     steps:

@@ -26,6 +26,8 @@ nav:
       - OpenAI Agents: entry/openai.md
       - MCP proxy & verify server: entry/mcp.md
       - Claude Agent SDK · CrewAI · DeerFlow: entry/frameworks.md
+      - HTTP gateway: entry/gateway.md
+      - TypeScript SDK: entry/typescript.md
       - Vercel AI SDK (HTTP): entry/vercel.md
       - API-only: entry/api.md
   - Gates & confirmations: gates.md

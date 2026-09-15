@@ -1,0 +1,592 @@
+{
+ "default_policy_yaml": "# Attest default policy \u2014 sensible behaviour for any system, by verb and target (doc 03 \u00a77).\npolicies:\n  - name: external-send\n    match: { verb: [send, reply, share, upload], target: external }\n    decision: ask\n    reason: reaches someone outside the organisation\n  - name: destructive-or-money\n    match: { verb: [delete, pay] }\n    decision: ask\n  - name: unknown-system-write\n    match: { system: unknown, verb: [write, execute, approve] }\n    decision: ask\n    reason: side effect on an unrecognised system\n  - name: reads\n    match: { verb: [read, search, get, list] }\n    decision: act\n",
+ "get_words": [
+  "check",
+  "count",
+  "describe",
+  "download",
+  "export",
+  "fetch",
+  "find",
+  "get",
+  "head",
+  "load",
+  "lookup",
+  "read",
+  "retrieve",
+  "show",
+  "view",
+  "whoami"
+ ],
+ "host_systems": [
+  {
+   "host": "gmail.googleapis.com",
+   "paths": {},
+   "system": "gmail"
+  },
+  {
+   "host": "people.googleapis.com",
+   "paths": {},
+   "system": "contacts"
+  },
+  {
+   "host": "sheets.googleapis.com",
+   "paths": {},
+   "system": "sheets"
+  },
+  {
+   "host": "docs.googleapis.com",
+   "paths": {},
+   "system": "docs"
+  },
+  {
+   "host": "slides.googleapis.com",
+   "paths": {},
+   "system": "slides"
+  },
+  {
+   "host": "www.googleapis.com",
+   "paths": {
+    "/calendar/": "calendar",
+    "/drive/": "drive",
+    "/gmail/": "gmail",
+    "/people/": "contacts",
+    "/upload/drive/": "drive"
+   },
+   "system": "unknown"
+  },
+  {
+   "host": "googleapis.com",
+   "paths": {},
+   "system": "gcp"
+  },
+  {
+   "host": "slack.com",
+   "paths": {},
+   "system": "slack"
+  },
+  {
+   "host": "api.hubapi.com",
+   "paths": {},
+   "system": "hubspot"
+  },
+  {
+   "host": "hubapi.com",
+   "paths": {},
+   "system": "hubspot"
+  },
+  {
+   "host": "api.notion.com",
+   "paths": {},
+   "system": "notion"
+  },
+  {
+   "host": "api.linear.app",
+   "paths": {},
+   "system": "linear"
+  },
+  {
+   "host": "graph.microsoft.com",
+   "paths": {
+    "/chats/": "teams",
+    "/drives/": "onedrive",
+    "/me/calendars": "outlook",
+    "/me/drive": "onedrive",
+    "/me/events": "outlook",
+    "/me/mailFolders": "outlook",
+    "/me/messages": "outlook",
+    "/sites/": "sharepoint",
+    "/teams/": "teams",
+    "/users/": "outlook"
+   },
+   "system": "unknown"
+  },
+  {
+   "host": "zohoapis.com",
+   "paths": {
+    "/books/": "zoho_books",
+    "/crm/": "zoho_crm",
+    "/people/": "zoho_people"
+   },
+   "system": "unknown"
+  },
+  {
+   "host": "zohoapis.in",
+   "paths": {
+    "/books/": "zoho_books",
+    "/crm/": "zoho_crm",
+    "/people/": "zoho_people"
+   },
+   "system": "unknown"
+  },
+  {
+   "host": "atlassian.net",
+   "paths": {
+    "/rest/api/": "jira",
+    "/wiki/": "confluence"
+   },
+   "system": "unknown"
+  },
+  {
+   "host": "api.atlassian.com",
+   "paths": {
+    "/confluence/": "confluence",
+    "/jira/": "jira"
+   },
+   "system": "unknown"
+  },
+  {
+   "host": "api.github.com",
+   "paths": {},
+   "system": "github"
+  },
+  {
+   "host": "gitlab.com",
+   "paths": {},
+   "system": "gitlab"
+  },
+  {
+   "host": "api.zoom.us",
+   "paths": {},
+   "system": "zoom"
+  },
+  {
+   "host": "salesforce.com",
+   "paths": {},
+   "system": "salesforce"
+  },
+  {
+   "host": "freshdesk.com",
+   "paths": {},
+   "system": "freshdesk"
+  },
+  {
+   "host": "api.intercom.io",
+   "paths": {},
+   "system": "intercom"
+  },
+  {
+   "host": "api.stripe.com",
+   "paths": {},
+   "system": "stripe"
+  },
+  {
+   "host": "api.razorpay.com",
+   "paths": {},
+   "system": "razorpay"
+  },
+  {
+   "host": "quickbooks.api.intuit.com",
+   "paths": {},
+   "system": "quickbooks"
+  },
+  {
+   "host": "api.xero.com",
+   "paths": {},
+   "system": "xero"
+  },
+  {
+   "host": "app.asana.com",
+   "paths": {},
+   "system": "asana"
+  },
+  {
+   "host": "api.clickup.com",
+   "paths": {},
+   "system": "clickup"
+  },
+  {
+   "host": "api.monday.com",
+   "paths": {},
+   "system": "monday"
+  },
+  {
+   "host": "zendesk.com",
+   "paths": {},
+   "system": "zendesk"
+  },
+  {
+   "host": "api.calendly.com",
+   "paths": {},
+   "system": "calendly"
+  },
+  {
+   "host": "docusign.net",
+   "paths": {},
+   "system": "docusign"
+  },
+  {
+   "host": "api.dropboxapi.com",
+   "paths": {},
+   "system": "dropbox"
+  },
+  {
+   "host": "api.box.com",
+   "paths": {},
+   "system": "box"
+  },
+  {
+   "host": "api.airtable.com",
+   "paths": {},
+   "system": "airtable"
+  },
+  {
+   "host": "api.trello.com",
+   "paths": {},
+   "system": "trello"
+  },
+  {
+   "host": "api.twilio.com",
+   "paths": {},
+   "system": "twilio"
+  },
+  {
+   "host": "api.sendgrid.com",
+   "paths": {},
+   "system": "sendgrid"
+  },
+  {
+   "host": "api.resend.com",
+   "paths": {},
+   "system": "resend"
+  },
+  {
+   "host": "api.mailchimp.com",
+   "paths": {},
+   "system": "mailchimp"
+  },
+  {
+   "host": "discord.com",
+   "paths": {},
+   "system": "discord"
+  },
+  {
+   "host": "api.telegram.org",
+   "paths": {},
+   "system": "telegram"
+  },
+  {
+   "host": "myshopify.com",
+   "paths": {},
+   "system": "shopify"
+  },
+  {
+   "host": "amazonaws.com",
+   "paths": {},
+   "system": "aws"
+  }
+ ],
+ "list_words": [
+  "index",
+  "list",
+  "ls"
+ ],
+ "money_nouns": [
+  "charge",
+  "disbursement",
+  "payment",
+  "payout",
+  "refund",
+  "transfer",
+  "wire",
+  "withdrawal"
+ ],
+ "read_verbs": [
+  "get",
+  "list",
+  "read",
+  "search"
+ ],
+ "risk_by_verb": {
+  "approve": "high",
+  "create": "high",
+  "delete": "very_high",
+  "execute": "high",
+  "get": "low",
+  "list": "low",
+  "pay": "very_high",
+  "read": "low",
+  "reply": "high",
+  "search": "low",
+  "send": "high",
+  "share": "high",
+  "update": "medium",
+  "upload": "medium",
+  "write": "medium"
+ },
+ "risk_overrides": {
+  "gmail_create_draft": "medium",
+  "gmail_update_labels": "medium",
+  "onedrive_delete_permission": "medium",
+  "outlook_cancel_event": "high",
+  "sharepoint_publish_site_page": "high",
+  "sharepoint_remove_drive_item_permission": "medium",
+  "slack_add_reaction": "low",
+  "slack_join_channel": "medium",
+  "slack_leave_channel": "medium",
+  "slack_mark_as_read": "low",
+  "slack_open_dm": "medium",
+  "slack_remove_reaction": "low",
+  "slack_set_status": "medium",
+  "slack_set_user_presence": "medium",
+  "teams_remove_team_member": "high",
+  "zoho_crm_convert_lead": "high",
+  "zoho_crm_upsert_records": "high"
+ },
+ "search_words": [
+  "filter",
+  "query",
+  "search"
+ ],
+ "strip_prefix": [
+  "async",
+  "batch",
+  "bulk",
+  "do",
+  "safe",
+  "try"
+ ],
+ "system_aliases": {
+  "file": "filesystem",
+  "files": "filesystem",
+  "fs": "filesystem",
+  "gcal": "calendar",
+  "gdrive": "drive",
+  "gh": "github",
+  "google_calendar": "calendar",
+  "google_contacts": "contacts",
+  "google_docs": "docs",
+  "google_drive": "drive",
+  "google_mail": "gmail",
+  "google_sheet": "sheets",
+  "google_sheets": "sheets",
+  "google_slides": "slides",
+  "googlemail": "gmail",
+  "hs": "hubspot",
+  "hubspot_crm": "hubspot",
+  "lambda": "aws",
+  "mail": "gmail",
+  "microsoft_outlook": "outlook",
+  "microsoft_teams": "teams",
+  "ms_teams": "teams",
+  "msteams": "teams",
+  "office365": "outlook",
+  "one_drive": "onedrive",
+  "people": "contacts",
+  "pg": "postgres",
+  "postgresql": "postgres",
+  "s3": "aws",
+  "ses": "aws",
+  "sharepoint_online": "sharepoint",
+  "sql": "postgres",
+  "zoho": "zoho_crm",
+  "zohobooks": "zoho_books",
+  "zohocrm": "zoho_crm"
+ },
+ "systems": [
+  "airtable",
+  "asana",
+  "aws",
+  "azure",
+  "box",
+  "calendar",
+  "calendly",
+  "clickup",
+  "confluence",
+  "contacts",
+  "discord",
+  "docs",
+  "docusign",
+  "drive",
+  "dropbox",
+  "filesystem",
+  "fireflies",
+  "freshdesk",
+  "gcp",
+  "github",
+  "gitlab",
+  "gmail",
+  "hubspot",
+  "intercom",
+  "jira",
+  "linear",
+  "mailchimp",
+  "monday",
+  "notion",
+  "onedrive",
+  "outlook",
+  "postgres",
+  "quickbooks",
+  "razorpay",
+  "resend",
+  "salesforce",
+  "sendgrid",
+  "sharepoint",
+  "sheets",
+  "shopify",
+  "slack",
+  "slides",
+  "stripe",
+  "teams",
+  "telegram",
+  "trello",
+  "twilio",
+  "unknown",
+  "whatsapp",
+  "xero",
+  "zendesk",
+  "zoho_books",
+  "zoho_crm",
+  "zoho_people",
+  "zoom"
+ ],
+ "verb_map": {
+  "acl": "share",
+  "add": "create",
+  "append": "create",
+  "approve": "approve",
+  "archive": "update",
+  "assign": "update",
+  "attach": "upload",
+  "authorise": "approve",
+  "authorize": "approve",
+  "book": "create",
+  "call": "execute",
+  "cancel": "delete",
+  "change": "update",
+  "charge": "pay",
+  "clear": "delete",
+  "clone": "create",
+  "close": "update",
+  "comment": "create",
+  "complete": "update",
+  "convert": "update",
+  "copy": "create",
+  "create": "create",
+  "delete": "delete",
+  "deploy": "execute",
+  "deposit": "pay",
+  "destroy": "delete",
+  "disable": "update",
+  "dispatch": "execute",
+  "drop": "delete",
+  "duplicate": "create",
+  "edit": "update",
+  "email": "send",
+  "enable": "update",
+  "exec": "execute",
+  "execute": "execute",
+  "forward": "send",
+  "grant": "share",
+  "import": "create",
+  "insert": "create",
+  "invite": "create",
+  "invoke": "execute",
+  "join": "update",
+  "label": "update",
+  "leave": "update",
+  "mark": "update",
+  "merge": "update",
+  "message": "send",
+  "modify": "update",
+  "move": "update",
+  "new": "create",
+  "notify": "send",
+  "open": "create",
+  "patch": "update",
+  "pay": "pay",
+  "payment": "pay",
+  "payments": "pay",
+  "payout": "pay",
+  "permission": "share",
+  "permissions": "share",
+  "pin": "update",
+  "post": "send",
+  "publish": "update",
+  "purge": "delete",
+  "put": "create",
+  "react": "update",
+  "refund": "pay",
+  "reject": "update",
+  "remove": "delete",
+  "rename": "update",
+  "reopen": "update",
+  "replace": "update",
+  "reply": "reply",
+  "resolve": "update",
+  "respond": "reply",
+  "restore": "update",
+  "revoke": "delete",
+  "run": "execute",
+  "schedule": "create",
+  "send": "send",
+  "set": "update",
+  "settle": "pay",
+  "share": "share",
+  "sign": "approve",
+  "snooze": "update",
+  "star": "update",
+  "start": "create",
+  "stop": "update",
+  "subscribe": "update",
+  "toggle": "update",
+  "transfer": "pay",
+  "trash": "delete",
+  "trigger": "execute",
+  "unarchive": "update",
+  "unassign": "update",
+  "unlabel": "update",
+  "unpin": "update",
+  "unpublish": "update",
+  "unstar": "update",
+  "unsubscribe": "update",
+  "untrash": "update",
+  "unwatch": "update",
+  "update": "update",
+  "upload": "upload",
+  "upsert": "update",
+  "watch": "update",
+  "withdraw": "pay"
+ },
+ "verb_overrides": {
+  "calendar_create_acl_rule": "share",
+  "calendar_update_acl_rule": "share",
+  "drive_create_permission": "share",
+  "drive_get_permission": "get",
+  "drive_list_permissions": "list",
+  "drive_share_file": "share",
+  "drive_update_permission": "share",
+  "gmail_create_draft": "create",
+  "gmail_reply_message": "reply",
+  "gmail_send_message": "send",
+  "onedrive_create_sharing_link": "share",
+  "onedrive_delete_permission": "update",
+  "onedrive_invite_recipients": "share",
+  "outlook_cancel_event": "update",
+  "sharepoint_add_drive_item_permission": "share",
+  "sharepoint_create_sharing_link": "share",
+  "sharepoint_publish_site_page": "update",
+  "sharepoint_remove_drive_item_permission": "update",
+  "sharepoint_restore_drive_item_version": "update",
+  "sharepoint_update_drive_item_permission": "share",
+  "slack_add_reaction": "update",
+  "slack_remove_reaction": "update",
+  "teams_add_team_member": "update",
+  "teams_remove_team_member": "update",
+  "zoho_crm_convert_lead": "update",
+  "zoho_crm_upsert_records": "update"
+ },
+ "write_verbs": [
+  "approve",
+  "create",
+  "delete",
+  "execute",
+  "pay",
+  "reply",
+  "send",
+  "share",
+  "update",
+  "upload",
+  "write"
+ ]
+}

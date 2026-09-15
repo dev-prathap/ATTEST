@@ -1,0 +1,20 @@
+{
+  "name": "@attest/sdk",
+  "version": "0.1.0",
+  "description": "Prove what your AI agent actually did. Decide · Gate · Verify · Attest — TypeScript SDK.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./adapters/vercel": "./dist/adapters/vercel.js",
+    "./adapters/langchain": "./dist/adapters/langchain.js",
+    "./adapters/mastra": "./dist/adapters/mastra.js"
+  },
+  "files": ["dist", "README.md"],
+  "scripts": { "build": "tsc -p tsconfig.json", "test": "vitest run", "lint": "tsc -p tsconfig.json --noEmit" },
+  "dependencies": { "yaml": "^2.5.0" },
+  "devDependencies": { "@types/node": "^22", "typescript": "^5.6", "vitest": "^2.1.0" },
+  "engines": { "node": ">=20" }
+}

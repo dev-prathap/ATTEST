@@ -38,6 +38,15 @@ The response carries the admin API key (shown once). Open the dashboard, paste t
 Roles: `agent` (sink, policy read, confirm create/poll) · `approver` (+ decide) · `admin` (+ keys, policy, settings).
 Every query is scoped by the key's org; the hash chain is per org.
 
+## Server-side read-back (no token in the agent)
+
+For API-only and no-code callers, the cloud can read back with a **read-only** connection from a self-hosted
+Nango (doc 03 §5 mode 3). Configure per org: `nango_url`, `nango_secret`, and
+`nango_connections: {"gmail": {"provider_config_key": "google-mail", "connection_id": "…"}}`. Then
+`POST /v1/verify {descriptor, result}` returns the verification level and evidence (`record: true` also appends a
+ledger row). The Python SDK uses it as a last-resort driver: `Attest.cloud(url, key, cloud_verify=True)`.
+Tokens are fetched from Nango per call and never stored; the cloud never writes to a vendor.
+
 ## Plans and billing
 
 | plan | agents | retention | verified actions / month | compliance exports |

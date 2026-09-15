@@ -111,6 +111,9 @@ class DecideConfirm(BaseModel):
 
 class SettingsPut(BaseModel):
     domain: str | None = None
+    nango_url: str | None = None
+    nango_secret: str | None = None
+    nango_connections: dict[str, dict[str, str]] | None = None
     slack_bot_token: str | None = None
     slack_channel: str | None = None
     slack_signing_secret: str | None = None
@@ -560,6 +563,38 @@ async def slack_interact(request: Request, db: Database = Depends(get_db)) -> di
         return {"ok": True, "decision": dec.to_dict() if dec else None}
 
 
+# ── server-side verification (P3.3) ───────────────────────────────────────────
+class VerifyIn(BaseModel):
+    descriptor: dict[str, Any]
+    result: Any = None
+    record: bool = False  # also append a ledger row (API-only callers that never sink one themselves)
+
+
+@app.post("/v1/verify")
+def verify_action(body: VerifyIn, p: Principal = Depends(principal), db: Database = Depends(get_db)) -> dict[str, Any]:
+    from attest_cloud import verify as sv
+    with db.session() as s:
+        org = s.get(Org, p.org_id)
+        settings = dict(org.settings or {})
+    rec, available = sv.verify_with_org(settings, body.descriptor, body.result,
+                                        fetch=getattr(app.state, "nango_fetch", None))
+    out = {**rec.model_dump(mode="json"), "read_back_available": available}
+    if body.record:
+        from attest.descriptor import short_hash
+        from attest.ledger.models import ExecutionRecord, LedgerEntry, preview
+        d = ActionDescriptor.model_validate(body.descriptor)
+        entry = LedgerEntry.from_descriptor(d, decision="recorded", risk_tier="high")
+        entry.execution = ExecutionRecord(status="done",
+                                          result_hash=None if body.result is None else short_hash(body.result),
+                                          result_preview=preview(body.result))
+        entry.verification = rec
+        payload = entry.payload()
+        with db.chain_lock, db.session() as s:
+            row, _created = chain.append(s, p.org_id, payload, entry_id=entry.id, client_seq=None, client_hash=None)
+            out["seq"], out["hash"] = row.seq, row.hash
+    return out
+
+
 # ── billing ───────────────────────────────────────────────────────────────────
 @app.get("/v1/billing")
 def get_billing(p: Principal = Depends(principal), db: Database = Depends(get_db)) -> dict[str, Any]:
@@ -633,7 +668,7 @@ async def stripe_webhook(request: Request, db: Database = Depends(get_db)) -> di
 
 
 # ── settings ──────────────────────────────────────────────────────────────────
-_SECRET_KEYS = ("slack_bot_token", "slack_signing_secret", "webhook_secret")
+_SECRET_KEYS = ("slack_bot_token", "slack_signing_secret", "webhook_secret", "nango_secret")
 
 
 def _settings_json(org: Org) -> dict[str, Any]:

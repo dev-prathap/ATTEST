@@ -17,3 +17,5 @@ attest-cloud.sqlite
 dashboard/node_modules/
 dashboard/.next/
 dashboard/next-env.d.ts
+packages/attest-ts/node_modules/
+packages/attest-ts/dist/

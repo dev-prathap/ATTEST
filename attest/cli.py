@@ -20,6 +20,15 @@ from attest.ledger import SqliteLedger
 
 
 def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv[1:] if argv is None else list(argv)
+    if argv and argv[0] in ("gateway", "mcp-proxy"):  # single binary: pass the rest through untouched
+        if argv[0] == "gateway":
+            from attest.gateway.server import main as gw_main
+            gw_main(argv[1:])
+        else:
+            from attest.mcp.proxy import main as mcp_main
+            mcp_main(argv[1:])
+        return 0
     ap = argparse.ArgumentParser(prog="attest", description="Proof layer for AI agents")
     ap.add_argument("--ledger", default=os.environ.get("ATTEST_LEDGER", ".attest/ledger.sqlite"))
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -47,6 +56,10 @@ def main(argv: list[str] | None = None) -> int:
     e.add_argument("--format", choices=["json", "csv", "ietf", "eu-ai-act"], default="json")
 
     sub.add_parser("checkpoint", help="sign the current ledger head (ATTEST_LEDGER_KEY)")
+    gw = sub.add_parser("gateway", help="run the outbound HTTP gateway (same as attest-gateway)", add_help=False)
+    gw.add_argument("rest", nargs=argparse.REMAINDER)
+    mp = sub.add_parser("mcp-proxy", help="run the MCP proxy (same as attest-mcp)", add_help=False)
+    mp.add_argument("rest", nargs=argparse.REMAINDER)
     pr = sub.add_parser("prune", help="retention: drop old rows, keeping a checkpoint so the chain still verifies")
     pr.add_argument("--older-than-days", type=int, required=True)
 

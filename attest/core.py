@@ -96,12 +96,15 @@ class Attest:
         conv = ConventionDriver(http_get) if http_get is not None else self.convention
         if conv is not None:
             out.append(conv)
+        cv = getattr(self, "cloud_verify", None)
+        if cv is not None:
+            out.append(cv)  # last resort: the cloud's read-only connections
         return out
 
     @classmethod
     def cloud(cls, url: str | None = None, api_key: str | None = None, *, wait: bool = True,
               timeout_s: float | None = 900, ledger_path: str | None = None, transport: Any = None,
-              **kw: Any) -> Attest:
+              cloud_verify: bool | set[str] = False, **kw: Any) -> Attest:
         """A client wired to Attest Cloud: synced ledger, cloud policy, cloud-routed confirmations."""
         from attest.cloud import CloudClient, CloudLedger, CloudStore, cloud_policy
         from attest.gate import StoreGate
@@ -112,6 +115,9 @@ class Attest:
         policy = kw.pop("policy", None) or cloud_policy(cloud, ctx=PolicyContext())
         at = cls(ledger=ledger, policy=policy, gate=gate, store=store, **kw)
         at.cloud_client = cloud  # type: ignore[attr-defined]
+        if cloud_verify:
+            from attest.cloud import CloudVerifyDriver
+            at.cloud_verify = CloudVerifyDriver(cloud, None if cloud_verify is True else set(cloud_verify))  # type: ignore[attr-defined]
         return at
 
     # ── context ───────────────────────────────────────────────────────────

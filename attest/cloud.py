@@ -261,5 +261,37 @@ class CloudStore:
             time.sleep(poll_s)
 
 
-__all__ = ["CloudClient", "CloudError", "CloudLedger", "CloudStore", "cloud_policy", "refresh_policy"]
+class CloudVerifyDriver:
+    """L3 via the cloud's read-only Nango connections (doc 03 §5 mode 3) — for agents that hold no token.
+    Runs after local drivers, only for systems the org configured on the cloud."""
+
+    name = "cloud"
+
+    def __init__(self, cloud: CloudClient, systems: set[str] | None = None):
+        self.cloud, self.systems = cloud, systems
+        self._last: dict[str, dict[str, Any]] = {}
+
+    def supports(self, d: ActionDescriptor) -> bool:
+        return self.systems is None or d.system in self.systems
+
+    def fetch(self, d: ActionDescriptor, result: Any) -> Any:
+        out = self.cloud.request("POST", "/v1/verify", {"descriptor": d.model_dump(mode="json", exclude={"result"}),
+                                                        "result": result})
+        if not out.get("read_back_available"):
+            return None
+        self._last[d.id] = out
+        return out
+
+    def compare(self, d: ActionDescriptor, fetched: Any) -> tuple[bool, dict[str, Any]]:
+        out = self._last.pop(d.id, fetched)
+        level = out.get("level")
+        if level == "unverified":
+            return False, {**out.get("evidence", {}), "via": "cloud"}
+        if level in ("verified", "verified-custom"):
+            return True, {**out.get("evidence", {}), "via": "cloud"}
+        raise RuntimeError(f"cloud could not verify: {out.get('evidence', {}).get('detail') or level}")
+
+
+__all__ = ["CloudClient", "CloudError", "CloudLedger", "CloudStore", "CloudVerifyDriver", "cloud_policy",
+           "refresh_policy"]
 _ = sqlite3

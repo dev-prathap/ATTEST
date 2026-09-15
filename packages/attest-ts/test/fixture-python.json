@@ -1,0 +1,23 @@
+{
+ "payload": {
+  "z": 1,
+  "a": {
+   "nested": [
+    1,
+    2,
+    {
+     "k": "v"
+    }
+   ],
+   "é": "ünïcode ✓ 😀"
+  },
+  "b": null,
+  "t": true,
+  "n": 3.5,
+  "s": "quote\"back\\slash\n"
+ },
+ "canonical": "{\"a\":{\"nested\":[1,2,{\"k\":\"v\"}],\"\\u00e9\":\"\\u00fcn\\u00efcode \\u2713 \\ud83d\\ude00\"},\"b\":null,\"n\":3.5,\"s\":\"quote\\\"back\\\\slash\\n\",\"t\":true,\"z\":1}",
+ "short_hash": "19acec8f1477d064",
+ "payload_hash": "19acec8f1477d06425cf5ca1c737767bc391bb05f08484909d49cfeb91c45311",
+ "entry_hash": "eb9bacd152044c66416132608b3f7ad3ac8f5a54f46bb3d69e427bad1841bd7c"
+}
