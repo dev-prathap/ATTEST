@@ -1,14 +1,14 @@
 # Deploying Attest — the runbook
 
 Brand **Attest**. Packages: PyPI **`attestlayer`** (import `attest`, CLI `attest`, `attest-mcp`, `attest-mcp-server`,
-`attest-gateway`), npm **`@attestlayer/sdk`**, images **`ghcr.io/dev-pratapk/attest-api`** and **`attest-dashboard`**,
-docs at **https://dev-pratapk.github.io/ATTEST/**. Everything ships from one git tag.
+`attest-gateway`), npm **`@attestlayer/sdk`**, images **`ghcr.io/dev-prathap/attest-api`** and **`attest-dashboard`**,
+docs at **https://dev-prathap.github.io/ATTEST/**. Everything ships from one git tag.
 
 ## 0. One-time accounts (you)
 
 | what | where | why |
 | --- | --- | --- |
-| PyPI project `attestlayer` | pypi.org → Your projects → *Publishing* → add **trusted publisher**: owner `dev-pratapk`, repo `ATTEST`, workflow `release.yml`, environment `pypi` | no API token to leak; the release workflow publishes via OIDC |
+| PyPI project `attestlayer` | pypi.org → Your projects → *Publishing* → add **trusted publisher**: owner `dev-prathap`, repo `ATTEST`, workflow `release.yml`, environment `pypi` | no API token to leak; the release workflow publishes via OIDC |
 | GitHub environment `pypi` | repo → Settings → Environments → New: `pypi` | required by the trusted publisher |
 | npm org `attestlayer` | npmjs.com → create org `attestlayer` (free, public) → Access token (Automation) | `@attestlayer/sdk` |
 | GitHub secret `NPM_TOKEN` | repo → Settings → Secrets → Actions | npm publish with provenance |
@@ -52,8 +52,8 @@ Listing files live in `mcp/`; the README carries the `mcp-name:` ownership marke
 
 ```bash
 brew install mcp-publisher                       # or the curl one-liner in the registry quickstart
-mcp-publisher login github                       # namespace io.github.dev-pratapk/*
-mcp-publisher validate mcp/server.json && mcp-publisher publish mcp/server.json          # io.github.dev-pratapk/attest
+mcp-publisher login github                       # namespace io.github.dev-prathap/*
+mcp-publisher validate mcp/server.json && mcp-publisher publish mcp/server.json          # io.github.dev-prathap/attest
 mcp-publisher validate mcp/server-proxy.json && mcp-publisher publish mcp/server-proxy.json   # …/attest-proxy
 ```
 Bump `version` in both files with each release (tests assert they match `pyproject.toml`).
@@ -70,7 +70,7 @@ indexed. **Cursor / other directories:** point at the MCP Registry entry.
 **Option A — one VPS with Docker Compose** (simplest; Hetzner / DigitalOcean / Lightsail):
 
 ```bash
-git clone https://github.com/dev-pratapk/ATTEST && cd ATTEST/deploy
+git clone https://github.com/dev-prathap/ATTEST && cd ATTEST/deploy
 cp .env.example .env    # PG_PASSWORD, ATTEST_CLOUD_BOOTSTRAP_TOKEN, ATTEST_CORS_ORIGINS=https://app.attestlayer.dev
 docker compose up -d    # Postgres 16 + API :8400 + dashboard :3400
 ```

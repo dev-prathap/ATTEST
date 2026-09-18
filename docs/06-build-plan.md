@@ -64,6 +64,6 @@ Exit criteria: one LangGraph agent sends email + updates HubSpot through Attest 
 - Anything unrelated: DO platform launch, India MSME product, M&A tooling, skills/report side businesses.
 
 ## Prerequisites (day 0)
-1. ~~DO repository under version control and pushed~~ — done 2026-09-12, `dev-pratapk/DO` (private).
+1. ~~DO repository under version control and pushed~~ — done 2026-09-12, `dev-prathap/DO` (private).
 2. Confirm locked decisions in 07.
 3. GitHub org + domain; Slack workspace for testing.

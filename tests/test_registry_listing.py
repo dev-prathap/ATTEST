@@ -25,7 +25,7 @@ def test_server_json_matches_schema_and_package(schema, name):
     pyproject = (ROOT / "pyproject.toml").read_text()
     assert f'version = "{doc["version"]}"' in pyproject and pkg["version"] == doc["version"]
     assert f"mcp-name: {doc['name']}" in (ROOT / "README.md").read_text()  # PyPI ownership marker
-    assert doc["name"].startswith("io.github.dev-pratapk/")
+    assert doc["name"].startswith("io.github.dev-prathap/")
 
 
 def test_mcpb_manifest_and_glama():
@@ -35,7 +35,7 @@ def test_mcpb_manifest_and_glama():
     assert {t["name"] for t in m["tools"]} == {"attest_decide", "attest_confirm", "attest_confirm_status", "attest_record", "attest_verify", "attest_ledger"}
     for key in m["server"]["mcp_config"]["env"].values():
         assert key.startswith("${user_config.") and key[len("${user_config."):-1] in m["user_config"]
-    assert json.loads((ROOT / "glama.json").read_text())["maintainers"] == ["dev-pratapk"]
+    assert json.loads((ROOT / "glama.json").read_text())["maintainers"] == ["dev-prathap"]
 
 
 def test_launcher_dispatch(tmp_path):

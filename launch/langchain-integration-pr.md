@@ -5,7 +5,7 @@
 
 ## Attest
 
-[Attest](https://github.com/dev-pratapk/ATTEST) wraps LangChain tools so every call is decided by policy,
+[Attest](https://github.com/dev-prathap/ATTEST) wraps LangChain tools so every call is decided by policy,
 gated behind a human when it matters, **verified by reading back from the system of record**, and recorded in a
 hash-chained ledger. It never executes the action — your tool does.
 
@@ -48,4 +48,4 @@ graph.invoke(Command(resume={"status": "approved"}), config)
 Refusals and rejections return to the model as error `ToolMessage`s; every action produces a ledger entry with
 a verification level (`verified`, `acknowledged`, `unverified`, …) and evidence.
 
-**API reference:** https://github.com/dev-pratapk/ATTEST/blob/main/attest/README.md
+**API reference:** https://github.com/dev-prathap/ATTEST/blob/main/attest/README.md

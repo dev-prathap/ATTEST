@@ -14,9 +14,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/dev-pratapk/ATTEST"
-Documentation = "https://dev-pratapk.github.io/ATTEST/"
-Repository = "https://github.com/dev-pratapk/ATTEST"
+Homepage = "https://github.com/dev-prathap/ATTEST"
+Documentation = "https://dev-prathap.github.io/ATTEST/"
+Repository = "https://github.com/dev-prathap/ATTEST"
 
 [project.scripts]
 attestlayer = "attest.mcp.launcher:main"

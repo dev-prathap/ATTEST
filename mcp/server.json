@@ -1,11 +1,11 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.dev-pratapk/attest",
+  "name": "io.github.dev-prathap/attest",
   "title": "Attest",
   "description": "Decide by policy, gate behind a human, verify by read-back, record a hash-chained ledger.",
-  "websiteUrl": "https://dev-pratapk.github.io/ATTEST/",
+  "websiteUrl": "https://dev-prathap.github.io/ATTEST/",
   "repository": {
-    "url": "https://github.com/dev-pratapk/ATTEST",
+    "url": "https://github.com/dev-prathap/ATTEST",
     "source": "github"
   },
   "version": "0.1.0",
@@ -101,7 +101,7 @@
         "attest_verify",
         "attest_ledger"
       ],
-      "skill": "https://github.com/dev-pratapk/ATTEST/blob/main/skills/verified-actions/SKILL.md"
+      "skill": "https://github.com/dev-prathap/ATTEST/blob/main/skills/verified-actions/SKILL.md"
     }
   }
 }
