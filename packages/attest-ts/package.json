@@ -3,9 +3,16 @@
   "version": "0.1.0",
   "description": "Prove what your AI agent actually did. Decide · Gate · Verify · Attest — TypeScript SDK.",
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/dev-prathap/ATTEST", "directory": "packages/attest-ts" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dev-prathap/ATTEST.git",
+    "directory": "packages/attest-ts"
+  },
   "homepage": "https://dev-prathap.github.io/ATTEST/",
-  "publishConfig": { "access": "public", "provenance": true },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -15,9 +22,24 @@
     "./adapters/langchain": "./dist/adapters/langchain.js",
     "./adapters/mastra": "./dist/adapters/mastra.js"
   },
-  "files": ["dist", "README.md"],
-  "scripts": { "build": "tsc -p tsconfig.json", "test": "vitest run", "lint": "tsc -p tsconfig.json --noEmit" },
-  "dependencies": { "yaml": "^2.5.0" },
-  "devDependencies": { "@types/node": "^22", "typescript": "^5.6", "vitest": "^2.1.0" },
-  "engines": { "node": ">=20" }
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "lint": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "yaml": "^2.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "typescript": "^5.6",
+    "vitest": "^2.1.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
 }
