@@ -8,7 +8,7 @@
 set -euo pipefail
 
 : "${ATTEST_DOMAIN:?set ATTEST_DOMAIN (e.g. attestlayer.dev)}"
-: "${ATTEST_ACME_EMAIL:?set ATTEST_ACME_EMAIL (for Let's Encrypt)}"
+: "${ATTEST_ACME_EMAIL:?set ATTEST_ACME_EMAIL (for TLS certificates)}"
 REPO="${ATTEST_REPO:-https://github.com/dev-prathap/ATTEST}"
 DIR="${ATTEST_DIR:-/opt/attest}"
 
