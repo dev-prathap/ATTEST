@@ -37,6 +37,7 @@ nav:
   - Recipe automation & registry: automation.md
   - Ledger & exports: ledger.md
   - Attest Cloud: cloud.md
+  - Performance: performance.md
   - Hardening: hardening.md
   - SOC 2 readiness: soc2.md
   - CLI: cli.md

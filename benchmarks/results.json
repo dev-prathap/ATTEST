@@ -1,0 +1,101 @@
+{
+  "env": {
+    "python": "3.12.13",
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "machine": "arm64",
+    "implementation": "cpython"
+  },
+  "samples": 1000,
+  "results": {
+    "detect (tool name)": {
+      "n": 1000,
+      "mean_us": 9.77825,
+      "p50_us": 9.708,
+      "p95_us": 10.333,
+      "p99_us": 14.583,
+      "ops_per_sec": 102267.78820341063
+    },
+    "detect (method + url)": {
+      "n": 1000,
+      "mean_us": 10.098912,
+      "p50_us": 9.708,
+      "p95_us": 10.167,
+      "p99_us": 23.917,
+      "ops_per_sec": 99020.5677601706
+    },
+    "policy evaluate": {
+      "n": 1000,
+      "mean_us": 11.314012,
+      "p50_us": 10.958,
+      "p95_us": 12.625,
+      "p99_us": 15.833,
+      "ops_per_sec": 88385.97661024224
+    },
+    "verify: acknowledged": {
+      "n": 1000,
+      "mean_us": 4.282236,
+      "p50_us": 4.25,
+      "p95_us": 4.417,
+      "p99_us": 4.5,
+      "ops_per_sec": 233522.8604869045
+    },
+    "ledger append (hash chain)": {
+      "n": 1000,
+      "mean_us": 79.268157,
+      "p50_us": 75.5,
+      "p95_us": 99.958,
+      "p99_us": 202.291,
+      "ops_per_sec": 12615.406209078381
+    },
+    "action: act, acknowledged": {
+      "n": 1000,
+      "mean_us": 163.8554,
+      "p50_us": 159.959,
+      "p95_us": 230.792,
+      "p99_us": 369.958,
+      "ops_per_sec": 6102.941984212909
+    },
+    "action: ask (auto-approved), acknowledged": {
+      "n": 1000,
+      "mean_us": 194.88991399999998,
+      "p50_us": 185.208,
+      "p95_us": 301.917,
+      "p99_us": 423.917,
+      "ops_per_sec": 5131.101858867874
+    },
+    "action: ask + read-back verified (fake vendor)": {
+      "n": 1000,
+      "mean_us": 242.891709,
+      "p50_us": 230.542,
+      "p95_us": 372.417,
+      "p99_us": 513.833,
+      "ops_per_sec": 4117.061072677454
+    },
+    "action: act + custom verify": {
+      "n": 1000,
+      "mean_us": 181.073867,
+      "p50_us": 171.833,
+      "p95_us": 291.166,
+      "p99_us": 386.833,
+      "ops_per_sec": 5522.608074637297
+    },
+    "verify_chain (10k rows, from genesis)": {
+      "n": 5,
+      "mean_us": 347276.84959999996,
+      "p50_us": 303737.625,
+      "p95_us": 530775.291,
+      "p99_us": 530775.291,
+      "ops_per_sec": 2.87954696995155,
+      "rows": 10000
+    },
+    "verify_chain (100 rows since checkpoint)": {
+      "n": 25,
+      "mean_us": 2183.87164,
+      "p50_us": 2055.833,
+      "p95_us": 2639.875,
+      "p99_us": 2849.791,
+      "ops_per_sec": 457.9023701228155,
+      "rows": 100
+    }
+  }
+}

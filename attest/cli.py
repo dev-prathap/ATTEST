@@ -42,7 +42,9 @@ def main(argv: list[str] | None = None) -> int:
     lg.add_argument("--run")
     lg.add_argument("--json", action="store_true")
 
-    sub.add_parser("verify", help="verify the hash chain")
+    vf = sub.add_parser("verify", help="verify the hash chain")
+    vf.add_argument("--since-checkpoint", action="store_true",
+                    help="start at the newest checkpoint instead of genesis (bounded work on a long ledger)")
     dg = sub.add_parser("digest", help="agent-activity digest with anomaly flags")
     dg.add_argument("--since", type=float, default=24, help="hours")
     dg.add_argument("--json", action="store_true")
@@ -117,7 +119,7 @@ def main(argv: list[str] | None = None) -> int:
             _TokenClient(a.slack_token).chat_postMessage(channel=a.slack_channel, text="Attest daily digest", blocks=slack_blocks(d))
         return 0
     if a.cmd == "verify":
-        rep = ledger.verify_chain()
+        rep = ledger.verify_chain(since_checkpoint=a.since_checkpoint)
         detail = f" broken_at={rep.broken_at} {rep.problems}" if not rep.ok else ""
         print(f"chain ok={rep.ok} entries={rep.checked}{detail}")
         return 0 if rep.ok else 1

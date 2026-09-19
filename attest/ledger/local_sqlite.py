@@ -127,10 +127,20 @@ class SqliteLedger:
         return e
 
     # ── integrity ─────────────────────────────────────────────────────────
-    def verify_chain(self) -> hashchain.ChainReport:
-        """Verifies from genesis, or from the newest checkpoint that precedes the first retained row (after prune)."""
-        rows = self._rows()
+    def verify_chain(self, *, since_checkpoint: bool = False) -> hashchain.ChainReport:
+        """Verifies from genesis, or from the newest checkpoint that precedes the first retained row (after prune).
+
+        Verification is linear in the number of rows. `since_checkpoint=True` starts at the newest checkpoint
+        instead, which bounds the work on a long ledger: everything up to that checkpoint was already verified
+        when it was signed (and, if it was anchored, by anyone holding the anchor)."""
         anchor = None
+        if since_checkpoint:
+            with self._lock:
+                cp = self._cx.execute("SELECT seq, hash FROM checkpoint ORDER BY seq DESC LIMIT 1").fetchone()
+            if cp is not None:
+                anchor = (cp["seq"], cp["hash"])
+                return hashchain.verify(self._rows("seq > ?", (cp["seq"],)), anchor=anchor)
+        rows = self._rows()
         if rows and rows[0]["seq"] > 1:
             with self._lock:
                 cp = self._cx.execute("SELECT seq, hash FROM checkpoint WHERE seq = ?",

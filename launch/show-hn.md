@@ -85,7 +85,11 @@ previous hash. Signed checkpoints pin the head; anchoring publishes a checkpoint
 **"Does it slow the agent down?"** One read per write, in-process, with the credential you already hold. Gating
 only happens when policy says ask.
 
-**"Performance / scale numbers?"** Be honest: none published yet. SQLite locally, Postgres in the hosted option.
+**"Performance / scale numbers?"** A whole action — detect, policy, gate check, ledger append with the hash
+chain — is about 164 µs mean on Apple silicon, dominated by the SQLite write. Read-back adds one HTTP round trip
+to the system of record, 50–300 ms typically; that is the real price of `verified` and it dwarfs the layer.
+Chain verification is linear: 10k rows in 347 ms, or 2.2 ms from the newest checkpoint. Numbers and the script:
+https://dev-prathap.github.io/ATTEST/performance/
 
 **"Who are you / is this a company?"** Solo, built in the open, MIT. The hosted piece exists so teams can share
 a ledger and an approval inbox; the SDK is complete without it.

@@ -68,6 +68,7 @@ Full docs: `mkdocs serve` → [docs/site](./docs/site/quickstart.md).
 | [docs/site/](./docs/site/) | documentation site (mkdocs) · [docs/](./docs/) — product docs 01–08 · [docs/notes](./docs/notes/do-extraction.md) — DO / DeerFlow extraction |
 | [deploy/](./deploy/) | Dockerfiles + compose (Postgres, API :8400, dashboard :3400) |
 | [launch/](./launch/) | Show HN, blog drafts, LangChain integration PR draft |
+| [benchmarks/](./benchmarks/) | what the layer costs per action — `python benchmarks/bench.py` ([results](https://dev-prathap.github.io/ATTEST/performance/)) |
 | [DEPLOY.md](./DEPLOY.md) · [CHANGELOG.md](./CHANGELOG.md) | release (`git tag vX.Y.Z` → PyPI, npm, GHCR, Pages) and hosting runbook |
 
 ```bash

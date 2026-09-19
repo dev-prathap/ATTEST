@@ -118,3 +118,17 @@ def test_cli_checkpoint_prune_export(tmp_path, capsys, monkeypatch):
     assert json.loads(capsys.readouterr().out.strip())["trust_level"] == "L0"
     assert cli(["--ledger", p, "export", "--format", "eu-ai-act"]) == 0
     assert json.loads(capsys.readouterr().out)["integrity"]["checkpoints"]
+
+
+def test_verify_chain_since_checkpoint_is_bounded():
+    L = SqliteLedger(":memory:", signing_key="k")
+    fill(L, 6)
+    L.checkpoint()                       # pins seq 6
+    fill(L, 3)                           # seqs 7-9
+    full, bounded = L.verify_chain(), L.verify_chain(since_checkpoint=True)
+    assert full.ok and full.checked == 9
+    assert bounded.ok and bounded.checked == 9   # counts through the anchor, only reads rows after it
+    L._cx.execute("UPDATE ledger SET payload = replace(payload, '\"decision\":\"act\"', '\"decision\":\"ask\"') WHERE seq = 8")
+    assert L.verify_chain(since_checkpoint=True).broken_at == 8      # still catches tampering after the anchor
+    assert L.verify_chain().broken_at == 8
+    assert SqliteLedger(":memory:").verify_chain(since_checkpoint=True).ok   # no checkpoint ⇒ falls back
