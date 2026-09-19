@@ -24,8 +24,26 @@ Attest is **not** an agent framework, not a connector platform, not a guardrail 
 
 Brand **Attest** · PyPI `attestlayer` · npm `attestlayer` · deploy runbook in [DEPLOY.md](./DEPLOY.md).
 
+**TypeScript** — on npm today:
+
 ```bash
-pip install attestlayer              # brand: Attest · import attest · CLI attest
+npm install attestlayer
+```
+
+```ts
+import { Attest } from "attestlayer";
+
+const at = new Attest({ agent: "followup-agent@v3", readers: { gmail: process.env.GMAIL_TOKEN! } });
+const sendEmail = at.wrap({ system: "gmail", verb: "send", target: "to" },
+                          async ({ to, subject, body }) => gmail.send({ to, subject, body }));
+
+await sendEmail({ to: "arun@newco.com", subject: "Proposal", body: "…" });
+```
+
+**Python** — same contract, same ledger format:
+
+```bash
+pip install attestlayer              # publishing pending; today: pip install -e ".[dev]"
 ```
 
 ```python
