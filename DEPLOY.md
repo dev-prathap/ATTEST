@@ -1,7 +1,7 @@
 # Deploying Attest — the runbook
 
 Brand **Attest**. Packages: PyPI **`attestlayer`** (import `attest`, CLI `attest`, `attest-mcp`, `attest-mcp-server`,
-`attest-gateway`), npm **`@attestlayer/sdk`**, images **`ghcr.io/dev-prathap/attest-api`** and **`attest-dashboard`**,
+`attest-gateway`), npm **`attestlayer`**, images **`ghcr.io/dev-prathap/attest-api`** and **`attest-dashboard`**,
 docs at **https://dev-prathap.github.io/ATTEST/**. Everything ships from one git tag.
 
 ## 0. One-time accounts (you)
@@ -10,7 +10,7 @@ docs at **https://dev-prathap.github.io/ATTEST/**. Everything ships from one git
 | --- | --- | --- |
 | PyPI project `attestlayer` | pypi.org → Your projects → *Publishing* → add **trusted publisher**: owner `dev-prathap`, repo `ATTEST`, workflow `release.yml`, environment `pypi` | no API token to leak; the release workflow publishes via OIDC |
 | GitHub environment `pypi` | repo → Settings → Environments → New: `pypi` | required by the trusted publisher |
-| npm org `attestlayer` | npmjs.com → create org `attestlayer` (free, public) → Access token (Automation) | `@attestlayer/sdk` |
+| npm org `attestlayer` | npmjs.com → create org `attestlayer` (free, public) → Access token (Automation) | `attestlayer` |
 | GitHub secret `NPM_TOKEN` | repo → Settings → Secrets → Actions | npm publish with provenance |
 | GitHub Pages | repo → Settings → Pages → Source: **GitHub Actions** | docs site |
 | Domain `attestlayer.dev` (or .io/.ai) | any registrar | `app.` dashboard, `api.` cloud, `docs.` (CNAME to Pages, optional) |
@@ -25,7 +25,7 @@ After the workflow is green:
 
 ```bash
 pip install attestlayer                   # Python SDK + CLI + attest-mcp + attest-mcp-server + attest-gateway
-npm install @attestlayer/sdk              # TypeScript SDK
+npm install attestlayer              # TypeScript SDK
 uvx --from attestlayer attest-mcp-server  # run the MCP server without installing anything
 ```
 
@@ -118,7 +118,7 @@ CNAME in Settings → Pages and set `site_url` in `mkdocs.yml`.
 ```bash
 pip install attestlayer && attest --help && attest-mcp-server < /dev/null
 python -c "import attest; print(attest.__version__)"
-npx -y -p @attestlayer/sdk node -e "import('@attestlayer/sdk').then(m => console.log(Object.keys(m).length, 'exports'))"
+npx -y -p attestlayer node -e "import('attestlayer').then(m => console.log(Object.keys(m).length, 'exports'))"
 curl https://api.attestlayer.dev/healthz
 ```
 

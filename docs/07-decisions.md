@@ -3,7 +3,7 @@
 ## Locked
 | # | Decision | Why |
 | --- | --- | --- |
-| 1 | **Name: Attest** — brand, CLI `attest`, Python import `attest`. **Distribution: `attestlayer`** on PyPI, `@attestlayer/sdk` on npm, docker images `ghcr.io/dev-prathap/attest-*`, domain candidate `attestlayer.dev` (locked 2026-09-15: plain `attest` is taken on PyPI and npm by unrelated libraries; `attest-sdk` / `attest-ai` are other products) | states the promise in one word; the distribution name is unique and matches "proof layer" |
+| 1 | **Name: Attest** — brand, CLI `attest`, Python import `attest`. **Distribution: `attestlayer`** on PyPI, `attestlayer` on npm, docker images `ghcr.io/dev-prathap/attest-*`, domain candidate `attestlayer.dev` (locked 2026-09-15: plain `attest` is taken on PyPI and npm by unrelated libraries; `attest-sdk` / `attest-ai` are other products) | states the promise in one word; the distribution name is unique and matches "proof layer" |
 | 2 | **Wrapper model — we never execute** the customer's action | universality without connectors; no competition with execution platforms; safer |
 | 3 | **Universal coverage day one** (descriptor + verb detection + L0 floor) before deep recipes | nobody is turned away; depth is layered |
 | 4 | **Verification levels, never a boolean**; `unverified` is first-class | honesty is the product's trust |

@@ -1,5 +1,5 @@
 {
-  "name": "@attestlayer/sdk",
+  "name": "attestlayer",
   "version": "0.1.0",
   "description": "Prove what your AI agent actually did. Decide · Gate · Verify · Attest — TypeScript SDK.",
   "license": "MIT",

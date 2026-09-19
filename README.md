@@ -20,7 +20,7 @@ Attest is **not** an agent framework, not a connector platform, not a guardrail 
 
 ## Quickstart
 
-Brand **Attest** · PyPI `attestlayer` · npm `@attestlayer/sdk` · deploy runbook in [DEPLOY.md](./DEPLOY.md).
+Brand **Attest** · PyPI `attestlayer` · npm `attestlayer` · deploy runbook in [DEPLOY.md](./DEPLOY.md).
 
 ```bash
 pip install attestlayer              # brand: Attest · import attest · CLI attest
@@ -69,7 +69,7 @@ cd deploy && cp .env.example .env && docker compose up  # cloud + dashboard
 | PyPI | `pip install attestlayer` → `attest`, `attest-mcp`, `attest-mcp-server`, `attest-gateway`, `attestlayer` |
 | MCP Registry | `io.github.dev-prathap/attest` (verify server) · `io.github.dev-prathap/attest-proxy` (zero-code proxy) — `uvx attestlayer` |
 | Claude Desktop / Smithery | MCPB bundle from `mcp/mcpb` (`mcpb pack mcp/mcpb`) |
-| npm | `npm install @attestlayer/sdk` |
+| npm | `npm install attestlayer` |
 | Docker | `ghcr.io/dev-prathap/attest-api`, `ghcr.io/dev-prathap/attest-dashboard` |
 
 <!-- mcp-name: io.github.dev-prathap/attest -->
