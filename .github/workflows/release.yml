@@ -24,9 +24,12 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true
       - name: Publish with trusted publishing
         if: ${{ secrets.PYPI_API_TOKEN == '' }}
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          skip-existing: true
   npm:
     runs-on: ubuntu-latest
     steps:
@@ -34,7 +37,19 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22, registry-url: "https://registry.npmjs.org" }
       - run: cd packages/attest-ts && npm install --no-audit --no-fund && npm test && npm run build
-      - run: cd packages/attest-ts && npm publish --provenance --access public
+      - id: check
+        run: |
+          cd packages/attest-ts
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::$name@$version is already on npm — skipping publish"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.check.outputs.published == 'false'
+        run: cd packages/attest-ts && npm publish --provenance --access public
         env: { NODE_AUTH_TOKEN: "${{ secrets.NPM_TOKEN }}" }
   images:
     runs-on: ubuntu-latest
