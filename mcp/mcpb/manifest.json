@@ -1,45 +1,139 @@
 {
-  "manifest_version": "0.2",
+  "manifest_version": "0.3",
   "name": "attest",
   "display_name": "Attest",
   "version": "0.1.0",
   "description": "Prove what your AI agent actually did: decide, gate behind a human, verify by read-back, record a hash-chained ledger.",
-  "long_description": "Attest exposes six tools — attest_decide, attest_confirm, attest_confirm_status, attest_record, attest_verify, attest_ledger — so an agent can check policy before acting, ask a human, verify an action against the system of record with your own tokens, and keep a tamper-evident ledger locally.",
-  "author": { "name": "Prathap", "url": "https://github.com/dev-prathap" },
-  "repository": { "type": "git", "url": "https://github.com/dev-prathap/ATTEST" },
+  "long_description": "Attest exposes six tools \u2014 attest_decide, attest_confirm, attest_confirm_status, attest_record, attest_verify, attest_ledger \u2014 so an agent can check policy before acting, ask a human, verify an action against the system of record with your own tokens, and keep a tamper-evident ledger locally.\n\nRequires `uv` on the machine (https://docs.astral.sh/uv/): the bundle runs `uvx attestlayer`, which fetches the published package and keeps it current.",
+  "author": {
+    "name": "Prathap",
+    "url": "https://github.com/dev-prathap"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dev-prathap/ATTEST"
+  },
   "homepage": "https://dev-prathap.github.io/ATTEST/",
   "documentation": "https://dev-prathap.github.io/ATTEST/entry/mcp/",
   "license": "MIT",
-  "keywords": ["audit", "human-in-the-loop", "verification", "agents", "compliance"],
+  "keywords": [
+    "audit",
+    "human-in-the-loop",
+    "verification",
+    "agents",
+    "compliance"
+  ],
   "server": {
-    "type": "uv",
+    "type": "python",
     "entry_point": "server/main.py",
     "mcp_config": {
       "command": "uvx",
-      "args": ["attestlayer"],
+      "args": [
+        "attestlayer"
+      ],
       "env": {
         "ATTEST_POLICY": "${user_config.policy}",
         "ATTEST_LEDGER": "${user_config.ledger}",
+        "ATTEST_CONFIRM_TIMEOUT": "${user_config.confirm_timeout}",
         "GMAIL_TOKEN": "${user_config.gmail_token}",
         "SLACK_BOT_TOKEN": "${user_config.slack_token}",
-        "HUBSPOT_TOKEN": "${user_config.hubspot_token}"
+        "HUBSPOT_TOKEN": "${user_config.hubspot_token}",
+        "NOTION_TOKEN": "${user_config.notion_token}",
+        "LINEAR_API_KEY": "${user_config.linear_key}"
       }
     }
   },
   "tools": [
-    { "name": "attest_decide", "description": "Policy decision for an action: act / ask / refuse, risk, reasons" },
-    { "name": "attest_confirm", "description": "Ask a human to confirm an action (inbox / Slack / webhook)" },
-    { "name": "attest_confirm_status", "description": "Status of a confirm request" },
-    { "name": "attest_record", "description": "Record an action that already happened" },
-    { "name": "attest_verify", "description": "Read back an action from the system of record and compare with the intent" },
-    { "name": "attest_ledger", "description": "Query the ledger and verify the hash chain" }
+    {
+      "name": "attest_decide",
+      "description": "Policy decision for an action: act / ask / refuse, risk, reasons"
+    },
+    {
+      "name": "attest_confirm",
+      "description": "Ask a human to confirm an action (inbox / Slack / webhook)"
+    },
+    {
+      "name": "attest_confirm_status",
+      "description": "Status of a confirm request"
+    },
+    {
+      "name": "attest_record",
+      "description": "Record an action that already happened"
+    },
+    {
+      "name": "attest_verify",
+      "description": "Read back an action from the system of record and compare with the intent"
+    },
+    {
+      "name": "attest_ledger",
+      "description": "Query the ledger and verify the hash chain"
+    }
   ],
   "user_config": {
-    "policy": { "type": "file", "title": "Policy YAML", "description": "attest.yaml with your rules (optional)", "required": false },
-    "ledger": { "type": "string", "title": "Ledger path", "description": "Where the hash-chained ledger lives", "default": ".attest/ledger.sqlite", "required": false },
-    "gmail_token": { "type": "string", "title": "Gmail OAuth token", "description": "Enables Gmail read-back", "sensitive": true, "required": false },
-    "slack_token": { "type": "string", "title": "Slack bot token", "description": "Enables Slack read-back", "sensitive": true, "required": false },
-    "hubspot_token": { "type": "string", "title": "HubSpot token", "description": "Enables HubSpot read-back", "sensitive": true, "required": false }
+    "policy": {
+      "type": "file",
+      "title": "Policy YAML",
+      "description": "attest.yaml with your rules (optional)",
+      "required": false
+    },
+    "ledger": {
+      "type": "string",
+      "title": "Ledger path",
+      "description": "Where the hash-chained ledger lives",
+      "default": ".attest/ledger.sqlite",
+      "required": false
+    },
+    "gmail_token": {
+      "type": "string",
+      "title": "Gmail OAuth token",
+      "description": "Enables Gmail read-back",
+      "sensitive": true,
+      "required": false
+    },
+    "slack_token": {
+      "type": "string",
+      "title": "Slack bot token",
+      "description": "Enables Slack read-back",
+      "sensitive": true,
+      "required": false
+    },
+    "hubspot_token": {
+      "type": "string",
+      "title": "HubSpot token",
+      "description": "Enables HubSpot read-back",
+      "sensitive": true,
+      "required": false
+    },
+    "confirm_timeout": {
+      "type": "number",
+      "title": "Confirmation timeout (seconds)",
+      "description": "How long attest_confirm waits for a human",
+      "default": 900,
+      "required": false
+    },
+    "notion_token": {
+      "type": "string",
+      "title": "Notion integration token",
+      "description": "Enables Notion read-back",
+      "sensitive": true,
+      "required": false
+    },
+    "linear_key": {
+      "type": "string",
+      "title": "Linear API key",
+      "description": "Enables Linear read-back",
+      "sensitive": true,
+      "required": false
+    }
   },
-  "compatibility": { "platforms": ["darwin", "win32", "linux"], "runtimes": { "python": ">=3.11" } }
+  "compatibility": {
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
+    "runtimes": {
+      "python": ">=3.11,<4.0"
+    }
+  }
 }

@@ -71,5 +71,15 @@ jobs:
     needs: [pypi, npm, images]
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Build the MCPB bundle (Claude Desktop / Smithery)
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          node -e "const f='mcp/mcpb/manifest.json',j=require('./'+f);j.version=process.argv[1];require('fs').writeFileSync(f,JSON.stringify(j,null,2)+'\n')" "$version"
+          npx -y @anthropic-ai/mcpb validate mcp/mcpb/manifest.json
+          npx -y @anthropic-ai/mcpb pack mcp/mcpb "attest-$version.mcpb"
       - uses: softprops/action-gh-release@v2
-        with: { generate_release_notes: true }
+        with:
+          generate_release_notes: true
+          files: attest-*.mcpb

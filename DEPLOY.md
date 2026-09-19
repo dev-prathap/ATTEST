@@ -78,9 +78,16 @@ mcp-publisher validate mcp/server-proxy.json && mcp-publisher publish mcp/server
 ```
 Bump `version` in both files with each release (tests assert they match `pyproject.toml`).
 
-**Claude Desktop / Smithery (MCPB bundle):** `npx @anthropic-ai/mcpb pack mcp/mcpb attest.mcpb` → attach the
-bundle to the GitHub release (`softprops/action-gh-release` already publishes release assets; add the file) and
-`smithery mcp publish ./attest.mcpb -n attestlayer/attest`.
+**Claude Desktop / Smithery (MCPB bundle):** the release workflow builds `attest-<version>.mcpb` from
+`mcp/mcpb/` and attaches it to the GitHub release. To list it on Smithery:
+
+```bash
+gh release download v0.1.0 --repo dev-prathap/ATTEST --pattern '*.mcpb'
+npx -y @smithery/cli mcp publish ./attest-0.1.0.mcpb -n attestlayer/attest      # needs a Smithery account
+```
+
+The bundle runs `uvx attestlayer`, so it needs `uv` on the user's machine and never ships platform-specific
+wheels. Users who prefer no bundle can add the registry entry instead.
 
 **Glama:** `glama.json` at the repo root lists the maintainer; claim the server at glama.ai/mcp after the repo is
 indexed. **Cursor / other directories:** point at the MCP Registry entry.
