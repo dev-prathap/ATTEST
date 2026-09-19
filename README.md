@@ -1,49 +1,39 @@
-# Attest — Proof layer for AI agents
+# Attest — prove what your AI agent actually did
 
-[![ci](https://github.com/dev-prathap/ATTEST/actions/workflows/ci.yml/badge.svg)](https://github.com/dev-prathap/ATTEST/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/attestlayer?label=npm%20attestlayer)](https://www.npmjs.com/package/attestlayer) [![docs](https://img.shields.io/badge/docs-dev--prathap.github.io%2FATTEST-black)](https://dev-prathap.github.io/ATTEST/) [![license](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
+[![ci](https://github.com/dev-prathap/ATTEST/actions/workflows/ci.yml/badge.svg)](https://github.com/dev-prathap/ATTEST/actions/workflows/ci.yml) [![pypi](https://img.shields.io/pypi/v/attestlayer?label=pypi%20attestlayer)](https://pypi.org/project/attestlayer/) [![npm](https://img.shields.io/npm/v/attestlayer?label=npm%20attestlayer)](https://www.npmjs.com/package/attestlayer) [![docs](https://img.shields.io/badge/docs-dev--prathap.github.io%2FATTEST-black)](https://dev-prathap.github.io/ATTEST/) [![license](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
 
-> **Decide → Gate → Verify → Attest.**
-> When an AI agent takes an action in the real world, Attest decides whether it may, gates it behind a human when it matters, verifies from the system of record that it actually happened, and records tamper-evident evidence.
+**Decide → Gate → Verify → Attest.** Your agent sends the email, updates the CRM, moves the money.
+Attest decides whether it may, gates it behind a human when it matters, reads back from the system of
+record to check it actually happened, and records tamper-evident evidence either way.
 
-Attest is **not** an agent framework, not a connector platform, not a guardrail filter. It is the layer that lets a team say, with proof: *"this agent did exactly this, as this person, and it worked."*
+Attest never executes your action. Your tool does. That is why it works with any app and any framework
+on day one.
 
-## Read in this order
+## Your agent says it worked. Did it?
 
-| Doc | What it locks |
-| --- | --- |
-| [01 — Vision](./docs/01-vision.md) | What Attest is, what it is not, the thesis |
-| [02 — Product](./docs/02-product.md) | The four steps, surfaces, what a customer experiences |
-| [03 — Universal adapter](./docs/03-universal-adapter.md) | **All apps, all actions**: descriptor, entry points, verification ladder, auth, confirm, policy |
-| [04 — Architecture](./docs/04-architecture.md) | SDK + Cloud, stack, data model, ledger |
-| [05 — Market & positioning](./docs/05-market-positioning.md) | Why now, competitors, first vertical, go-to-market |
-| [06 — Build plan](./docs/06-build-plan.md) | Phases, weekly plan, what we reuse, what we do not build |
-| [07 — Decisions](./docs/07-decisions.md) | Locked decisions and open questions |
-| [08 — Phase plan](./docs/08-phase-plan.md) | Detailed phase-wise split: task IDs, deliverables, exit criteria, milestones, founder checklist |
+Two identical CRM writes, both reported success by the tool, both approved by a human:
 
-## Quickstart
-
-Brand **Attest** · PyPI `attestlayer` · npm `attestlayer` · deploy runbook in [DEPLOY.md](./DEPLOY.md).
-
-**TypeScript** — on npm today:
-
-```bash
-npm install attestlayer
+```console
+$ attest ledger
+#2  2026-09-19 10:16:46  someweirdcrm.create → leads   ask  approved  unverified   a09e7641db12
+#1  2026-09-19 10:16:46  someweirdcrm.create → leads   ask  approved  verified     77a6d99a60f6
 ```
 
-```ts
-import { Attest } from "attestlayer";
+The second one read back clean. The first did not, and the ledger says which field disagreed:
 
-const at = new Attest({ agent: "followup-agent@v3", readers: { gmail: process.env.GMAIL_TOKEN! } });
-const sendEmail = at.wrap({ system: "gmail", verb: "send", target: "to" },
-                          async ({ to, subject, body }) => gmail.send({ to, subject, body }));
-
-await sendEmail({ to: "arun@newco.com", subject: "Proposal", body: "…" });
+```json
+{ "level": "unverified", "matched": false,
+  "evidence": { "compared": 4, "exists": true, "failed": ["stage"],
+    "fields": { "stage": { "want": "qualified", "got": "new", "ok": false } } } }
 ```
 
-**Python** — same contract, same ledger format:
+A trace would have shown two green steps. That gap is the entire product.
+
+## Install
 
 ```bash
-pip install attestlayer              # publishing pending; today: pip install -e ".[dev]"
+pip install attestlayer          # Python
+npm  install attestlayer         # TypeScript — byte-identical ledger format
 ```
 
 ```python
@@ -53,49 +43,138 @@ import attest
 def send_email(to, subject, body): ...
 ```
 
-The first external send pauses for a human; the ledger row says `acknowledged`, or `verified` once Attest can
-read back with the agent's own credentials (`Attest(readers={"gmail": service})`). `attest ledger` · `attest verify`.
-Full docs: `mkdocs serve` → [docs/site](./docs/site/quickstart.md).
+```ts
+import { Attest } from "attestlayer";
+
+const at = new Attest({ agent: "followup-agent@v3", readers: { gmail: process.env.GMAIL_TOKEN! } });
+const sendEmail = at.wrap({ system: "gmail", verb: "send", target: "to" },
+                          async ({ to, subject, body }) => gmail.send({ to, subject, body }));
+```
+
+That is the whole change. The first external send now pauses for a human, and the ledger row says
+`acknowledged`, or `verified` once Attest can read back with the agent's own credentials
+(`Attest(readers={"gmail": service})`). Nothing else in your code moves.
+
+## Verification is layered, and it never overstates
+
+Every row states exactly how much was checked. A check that could not run is never dressed up as a pass.
+
+| level | what it means |
+| --- | --- |
+| `verified` | read back from the system of record, and the fields matched |
+| `verified-custom` | your own check ran and passed |
+| `acknowledged` | the action was accepted, but no read-back could run here |
+| `attested-only` | recorded with no verifier available for this action |
+| `unverified` | a check ran and **contradicted** the claim |
+
+Only a contradiction earns `unverified`. Missing credentials, a read-only scope or an unsupported verb
+degrade to `acknowledged`, because "we could not check" and "it did not happen" are different facts.
+
+## Where it plugs in
+
+| surface | how |
+| --- | --- |
+| Decorator / wrapper | `@attest.action(...)` · `at.wrap(...)` |
+| LangGraph | tool node wrapper, gate as a graph interrupt |
+| OpenAI Agents · Claude Agent SDK · CrewAI · DeerFlow | adapters in [`attest/`](./attest/) |
+| MCP | zero-code proxy in front of any server, plus a verify server |
+| HTTP gateway | point outbound traffic at it, no SDK at all |
+| API only | POST the descriptor yourself |
+
+Human confirmation lands where the team already works: Slack, the web inbox, a webhook, a LangGraph
+interrupt, or the console. Approvers can edit the parameters before approving, and the edit is recorded.
+
+## The record itself
+
+Hash-chained ledger, SQLite locally and Postgres per organisation in the cloud. Signed checkpoints let
+you prune old rows and still verify the chain. Optional Ed25519 signing, and external anchoring to a
+file, a git repo or an HTTP endpoint. Exports: JSON, CSV, the IETF `draft-sharif-agent-audit-trail`
+JSONL format, and an EU AI Act event-log pack.
+
+Overhead is roughly a sixth of a millisecond per action, measured in
+[benchmarks/](./benchmarks/) ([published numbers](https://dev-prathap.github.io/ATTEST/performance/)).
+
+## Try it locally
+
+```bash
+python examples/unknown_app.py                         # an app Attest has never seen, L1 → L3
+ATTEST_AUTO_APPROVE=1 python examples/langgraph_agent.py
+cd deploy && cp .env.example .env && docker compose up  # cloud API :8400 + dashboard :3400
+```
+
+## Attest Cloud
+
+The SDK is MIT and works standalone with a local ledger. Attest Cloud adds the shared ledger, the
+confirm inbox, versioned org policy, agent keys and compliance exports. Your vendor tokens never reach
+it: read-back happens in your process with your own credentials, and only hashes and previews are sent.
+Self-host it from [`deploy/`](./deploy/), or read [DEPLOY.md](./DEPLOY.md).
+
+## Install channels
+
+| where | how |
+| --- | --- |
+| PyPI | `pip install attestlayer` → `attest`, `attest-mcp`, `attest-mcp-server`, `attest-gateway` |
+| npm | `npm install attestlayer` |
+| MCP Registry | `io.github.dev-prathap/attest` (verify server) · `io.github.dev-prathap/attest-proxy` (zero-code proxy) |
+| Smithery | [`attestlayer/attest`](https://smithery.ai/server/attestlayer/attest) |
+| Claude Desktop | `attest-<version>.mcpb` on the [latest release](https://github.com/dev-prathap/ATTEST/releases/latest) |
+| Docker | `ghcr.io/dev-prathap/attest-api` · `ghcr.io/dev-prathap/attest-dashboard` |
+
+<!-- mcp-name: io.github.dev-prathap/attest -->
+<!-- mcp-name: io.github.dev-prathap/attest-proxy -->
+
+## Documentation
+
+Full docs at **[dev-prathap.github.io/ATTEST](https://dev-prathap.github.io/ATTEST/)** —
+[quickstart](https://dev-prathap.github.io/ATTEST/quickstart/) ·
+[verification levels](https://dev-prathap.github.io/ATTEST/levels/) ·
+[policy](https://dev-prathap.github.io/ATTEST/policy/) ·
+[read-back recipes](https://dev-prathap.github.io/ATTEST/recipes/) ·
+[ledger & exports](https://dev-prathap.github.io/ATTEST/ledger/) ·
+[hardening](https://dev-prathap.github.io/ATTEST/hardening/)
 
 ## Repository
 
 | path | what |
 | --- | --- |
-| [attest/](./attest/) | Python SDK — descriptor, registry, policy, hash-chained ledger, verification ladder + recipes, gates (console / Slack / webhook / inbox / LangGraph interrupt / pending + resume), adapters (LangGraph, OpenAI Agents), MCP proxy, CLI, cloud client. [attest/README.md](./attest/README.md) |
-| [cloud/](./cloud/) | Attest Cloud v0 — FastAPI + Postgres: orgs, keys, agents, versioned policy, per-org hash-chained ledger, confirm inbox with Slack / webhook, exports |
-| [dashboard/](./dashboard/) | Next.js dashboard — ledger drill-down, confirm inbox, policy / keys / settings |
-| [examples/](./examples/) | unknown app (L1 → L3), LangGraph agent (two `verified` rows), OpenAI Agents, MCP config, API-only, cloud |
-| [docs/site/](./docs/site/) | documentation site (mkdocs) · [docs/](./docs/) — product docs 01–08 · [docs/notes](./docs/notes/do-extraction.md) — DO / DeerFlow extraction |
-| [deploy/](./deploy/) | Dockerfiles + compose (Postgres, API :8400, dashboard :3400) |
-| [launch/](./launch/) | Show HN, blog drafts, LangChain integration PR draft |
-| [benchmarks/](./benchmarks/) | what the layer costs per action — `python benchmarks/bench.py` ([results](https://dev-prathap.github.io/ATTEST/performance/)) |
-| [DEPLOY.md](./DEPLOY.md) · [CHANGELOG.md](./CHANGELOG.md) | release (`git tag vX.Y.Z` → PyPI, npm, GHCR, Pages) and hosting runbook |
+| [attest/](./attest/) | Python SDK — descriptor, policy, ledger, verification ladder, gates, adapters, MCP proxy, CLI |
+| [packages/attest-ts/](./packages/attest-ts/) | TypeScript SDK — same canonical hashes, fixture-tested against Python |
+| [cloud/](./cloud/) | Attest Cloud — FastAPI + Postgres: orgs, keys, policy versions, ledger, confirm inbox, exports |
+| [dashboard/](./dashboard/) | Next.js dashboard — ledger drill-down, confirm inbox, policy and keys |
+| [examples/](./examples/) | unknown app, LangGraph, OpenAI Agents, MCP config, API-only, cloud |
+| [deploy/](./deploy/) | Dockerfiles and compose |
+| [benchmarks/](./benchmarks/) | what the layer costs per action |
+| [docs/](./docs/) | documentation site source, plus design notes |
 
 ```bash
-pytest -q && (cd cloud && pytest -q)                   # 273 + 21 tests
-ATTEST_AUTO_APPROVE=1 python examples/langgraph_agent.py
-cd deploy && cp .env.example .env && docker compose up  # cloud + dashboard
+pytest -q && (cd cloud && pytest -q)     # 355 + 37 offline tests
+pytest tests/live                        # 8 live suites; need real credentials, skipped without them
 ```
 
-## One-line rules
-- We never execute the customer's action. Their tool executes; we observe, decide, gate, verify, record.
-- Coverage is universal (any app, any action, any framework, any language). Verification depth is layered and honest.
-- Open-source SDK (MIT). Paid cloud (ledger, confirm inbox, policies, exports).
-- Developer-led, self-serve, USD. No enterprise sales motion in year one.
+## Contributing
 
-## Install from registries
+Read-back recipes are the easiest place to start: each one teaches Attest how to confirm a write in one
+more app, and needs nothing but that app's read API. See [CONTRIBUTING.md](./CONTRIBUTING.md), and
+[SECURITY.md](./SECURITY.md) for reporting a vulnerability.
 
-| where | how |
-| --- | --- |
-| PyPI *(publishing pending)* | `pip install attestlayer` → `attest`, `attest-mcp`, `attest-mcp-server`, `attest-gateway`, `attestlayer` |
-| MCP Registry | `io.github.dev-prathap/attest` (verify server) · `io.github.dev-prathap/attest-proxy` (zero-code proxy) — `uvx attestlayer` |
-| Smithery | [`attestlayer/attest`](https://smithery.ai/server/attestlayer/attest) |
-| Claude Desktop | `attest-<version>.mcpb` on the [release](https://github.com/dev-prathap/ATTEST/releases/latest) |
-| npm | `npm install attestlayer` — **live** |
-| Docker | `ghcr.io/dev-prathap/attest-api`, `ghcr.io/dev-prathap/attest-dashboard` |
+## Principles
 
-<!-- mcp-name: io.github.dev-prathap/attest -->
-<!-- mcp-name: io.github.dev-prathap/attest-proxy -->
+- We never execute your action. Your tool executes; we decide, gate, verify and record.
+- Coverage is universal. Verification depth is layered and stated honestly on every row.
+- Open-source SDK under MIT. Paid cloud for the shared ledger, inbox, policy and exports.
+
+## Design notes
+
+The thinking behind the product, kept in the open: [vision](./docs/01-vision.md) ·
+[product](./docs/02-product.md) · [universal adapter](./docs/03-universal-adapter.md) ·
+[architecture](./docs/04-architecture.md) · [market](./docs/05-market-positioning.md) ·
+[build plan](./docs/06-build-plan.md) · [decisions](./docs/07-decisions.md) ·
+[phase plan](./docs/08-phase-plan.md)
 
 ## Lineage
-Attest is extracted from two working codebases: **DO** (policy engine, read-back verification pairs, evidence ledger, Nango auth) and **DeerFlow** (tool receipts, verification patterns, MCP/IM channel adapters). Nothing here is theoretical — every core mechanism already runs against real Gmail, Slack, HubSpot, Notion, Linear and Google Workspace.
+
+Attest's core mechanisms are extracted from two working codebases: **DO** (policy engine, read-back
+verification pairs, evidence ledger) and **DeerFlow** (tool receipts, verification patterns, MCP and
+chat-channel adapters), which run against real Gmail, Slack, HubSpot, Notion, Linear and Google
+Workspace. Attest ships its own live suites for those systems in [`tests/live/`](./tests/live/); they
+need real credentials and are skipped without them.

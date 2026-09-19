@@ -1,0 +1,33 @@
+name: Read-back recipe request
+description: Ask for, or offer, verification support for another app
+labels: ["recipe", "good first issue"]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        A recipe teaches Attest how to confirm a write in one more app. If you are offering one rather
+        than asking, say so at the bottom and read CONTRIBUTING.md first.
+  - type: input
+    id: system
+    attributes:
+      label: App
+      placeholder: hubspot, notion, jira, …
+    validations: { required: true }
+  - type: input
+    id: verb
+    attributes:
+      label: Action to verify
+      placeholder: create, update, send, share, …
+    validations: { required: true }
+  - type: textarea
+    id: readback
+    attributes:
+      label: The read call that could confirm it
+      description: Which API returns the object after the write, and which fields can be compared.
+    validations: { required: true }
+  - type: checkboxes
+    id: offering
+    attributes:
+      label: Are you offering to write it?
+      options:
+        - label: I would like to contribute this recipe

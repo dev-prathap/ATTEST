@@ -1,0 +1,42 @@
+name: Bug report
+description: Something behaves differently from what the docs say
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, and what Attest did instead.
+    validations: { required: true }
+  - type: textarea
+    id: ledger
+    attributes:
+      label: The ledger row
+      description: >
+        Paste the row from `attest ledger` or the JSON export, redacted as needed. Hashes and field
+        names are enough; raw parameters are never needed.
+      render: json
+  - type: input
+    id: expected-level
+    attributes:
+      label: Expected verification level
+      placeholder: verified / verified-custom / acknowledged / attested-only / unverified
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `pip show attestlayer` or `npm ls attestlayer`.
+    validations: { required: true }
+  - type: dropdown
+    id: entry
+    attributes:
+      label: Entry point
+      options:
+        - Decorator or wrapper
+        - LangGraph
+        - OpenAI Agents
+        - Claude Agent SDK / CrewAI / DeerFlow
+        - MCP proxy or verify server
+        - HTTP gateway
+        - API only
+    validations: { required: true }

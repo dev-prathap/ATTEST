@@ -1,0 +1,22 @@
+name: Feature request
+description: Suggest something Attest should do
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What can you not prove today?
+    validations: { required: true }
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like instead
+    validations: { required: true }
+  - type: textarea
+    id: honesty
+    attributes:
+      label: Effect on verification levels
+      description: >
+        If this would change what any ledger row claims, say how. Attest must never report more than
+        was actually checked.
