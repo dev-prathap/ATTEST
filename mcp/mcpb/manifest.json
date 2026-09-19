@@ -46,27 +46,27 @@
   "tools": [
     {
       "name": "attest_decide",
-      "description": "Policy decision for an action: act / ask / refuse, risk, reasons"
+      "description": "Evaluate an action against the Attest policy before doing it. Returns decision (act|ask|refuse), risk_tier, reasons, target_class."
     },
     {
       "name": "attest_confirm",
-      "description": "Ask a human to confirm an action (inbox / Slack / webhook)"
+      "description": "Ask a human to confirm an action (web inbox / Slack / webhook). With wait=true blocks until decided (timeout_s); otherwise returns a request id to poll with attest_confirm_status."
     },
     {
       "name": "attest_confirm_status",
-      "description": "Status of a confirm request"
+      "description": "Status of a confirm request (id or resume token)."
     },
     {
       "name": "attest_record",
-      "description": "Record an action that already happened"
+      "description": "Record an action that already happened. Pass the tool's result for an acknowledged/attested-only level, or verified=true/false with evidence."
     },
     {
       "name": "attest_verify",
-      "description": "Read back an action from the system of record and compare with the intent"
+      "description": "Read back an action from the system of record with the configured credentials and compare it with the intent. Returns level (verified|acknowledged|unverified|\u2026) and evidence."
     },
     {
       "name": "attest_ledger",
-      "description": "Query the ledger and verify the hash chain"
+      "description": "Query the ledger: last N entries, filtered by run_id / level; verify the chain."
     }
   ],
   "user_config": {

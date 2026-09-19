@@ -83,7 +83,8 @@ Bump `version` in both files with each release (tests assert they match `pyproje
 
 ```bash
 gh release download v0.1.0 --repo dev-prathap/ATTEST --pattern '*.mcpb'
-npx -y @smithery/cli mcp publish ./attest-0.1.0.mcpb -n attestlayer/attest      # needs a Smithery account
+npx -y @smithery/cli mcp publish ./attest-0.1.0.mcpb -n attestlayer/attest \
+  --config-schema mcp/mcpb/config-schema.json          # needs a Smithery account
 ```
 
 The bundle runs `uvx attestlayer`, so it needs `uv` on the user's machine and never ships platform-specific

@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Attest configuration",
+  "properties": {
+    "policy": {
+      "type": "string",
+      "title": "Policy YAML",
+      "description": "attest.yaml with your rules (optional)"
+    },
+    "ledger": {
+      "type": "string",
+      "title": "Ledger path",
+      "description": "Where the hash-chained ledger lives",
+      "default": ".attest/ledger.sqlite"
+    },
+    "gmail_token": {
+      "type": "string",
+      "title": "Gmail OAuth token",
+      "description": "Enables Gmail read-back",
+      "format": "password"
+    },
+    "slack_token": {
+      "type": "string",
+      "title": "Slack bot token",
+      "description": "Enables Slack read-back",
+      "format": "password"
+    },
+    "hubspot_token": {
+      "type": "string",
+      "title": "HubSpot token",
+      "description": "Enables HubSpot read-back",
+      "format": "password"
+    },
+    "confirm_timeout": {
+      "type": "number",
+      "title": "Confirmation timeout (seconds)",
+      "description": "How long attest_confirm waits for a human",
+      "default": 900
+    },
+    "notion_token": {
+      "type": "string",
+      "title": "Notion integration token",
+      "description": "Enables Notion read-back",
+      "format": "password"
+    },
+    "linear_key": {
+      "type": "string",
+      "title": "Linear API key",
+      "description": "Enables Linear read-back",
+      "format": "password"
+    }
+  }
+}

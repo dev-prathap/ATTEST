@@ -49,3 +49,17 @@ def test_launcher_dispatch(tmp_path):
     assert "outbound" in out.stdout
     out = subprocess.run([sys.executable, "-m", "attest.mcp.launcher", "bogus"], capture_output=True, text=True, env=env)
     assert out.returncode == 2 and "unknown command" in out.stderr
+
+
+def test_mcpb_metadata_is_in_sync():
+    """manifest tools and config-schema.json are generated from the server; CI fails if they drift."""
+    import subprocess
+    import sys
+    out = subprocess.run([sys.executable, str(ROOT / "mcp" / "mcpb" / "sync_tools.py"), "--check"],
+                         capture_output=True, text=True, cwd=ROOT)
+    assert out.returncode == 0, out.stderr
+    schema = json.loads((ROOT / "mcp" / "mcpb" / "config-schema.json").read_text())
+    manifest = json.loads((ROOT / "mcp" / "mcpb" / "manifest.json").read_text())
+    assert set(schema["properties"]) == set(manifest["user_config"])
+    assert all(set(t) == {"name", "description"} for t in manifest["tools"])     # MCPB rejects extra keys
+    assert schema["properties"]["gmail_token"]["format"] == "password"          # secrets marked for the UI
