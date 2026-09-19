@@ -11,6 +11,9 @@ jobs:
   pypi:
     runs-on: ubuntu-latest
     environment: pypi
+    env:
+      # `secrets` is not available in step-level `if:`; map it once and test the env value instead.
+      HAS_TOKEN: ${{ secrets.PYPI_API_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
@@ -20,13 +23,13 @@ jobs:
       #   a. Trusted publishing — nothing to configure here; add a pending publisher on pypi.org.
       #   b. API token — add the repository secret PYPI_API_TOKEN; it takes precedence when present.
       - name: Publish with an API token
-        if: ${{ secrets.PYPI_API_TOKEN != '' }}
+        if: env.HAS_TOKEN == 'true'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
           skip-existing: true
       - name: Publish with trusted publishing
-        if: ${{ secrets.PYPI_API_TOKEN == '' }}
+        if: env.HAS_TOKEN != 'true'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           skip-existing: true
