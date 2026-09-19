@@ -93,7 +93,8 @@ gh release download v0.1.0 --repo dev-prathap/ATTEST --pattern '*.mcpb' --clobbe
 npx -y @smithery/cli mcp publish ./attest-0.1.0-smithery.mcpb -n <your-namespace>/attest
 ```
 
-The namespace must already exist on smithery.ai (your username, or an org you created there).
+The namespace must exist first: `npx -y @smithery/cli namespace create attestlayer` (already done for
+`attestlayer`). Pass the bundle's absolute path — the CLI resolves relative paths against the current directory.
 Build locally with `python mcp/mcpb/build.py`.
 
 The bundle runs `uvx attestlayer`, so it needs `uv` on the user's machine and never ships platform-specific
