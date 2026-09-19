@@ -74,14 +74,10 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - uses: astral-sh/setup-uv@v3
-      - name: Build the MCPB bundle (Claude Desktop / Smithery)
+      - name: Build the MCPB bundles (Claude Desktop + Smithery)
         run: |
-          version="${GITHUB_REF_NAME#v}"
           uv venv -p 3.12 && uv pip install -e .
-          .venv/bin/python mcp/mcpb/sync_tools.py
-          node -e "const f='mcp/mcpb/manifest.json',j=require('./'+f);j.version=process.argv[1];require('fs').writeFileSync(f,JSON.stringify(j,null,2)+'\n')" "$version"
-          npx -y @anthropic-ai/mcpb validate mcp/mcpb/manifest.json
-          npx -y @anthropic-ai/mcpb pack mcp/mcpb "attest-$version.mcpb"
+          .venv/bin/python mcp/mcpb/build.py --version "${GITHUB_REF_NAME#v}"
       - uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true

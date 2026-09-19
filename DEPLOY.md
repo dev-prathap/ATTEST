@@ -81,11 +81,20 @@ Bump `version` in both files with each release (tests assert they match `pyproje
 **Claude Desktop / Smithery (MCPB bundle):** the release workflow builds `attest-<version>.mcpb` from
 `mcp/mcpb/` and attaches it to the GitHub release. To list it on Smithery:
 
+Each release carries two bundles, because the two validators disagree about the tool shape:
+
+| file | for | tools carry |
+| --- | --- | --- |
+| `attest-<v>.mcpb` | Claude Desktop, the MCPB spec | `name`, `description` |
+| `attest-<v>-smithery.mcpb` | Smithery | `name`, `description`, `inputSchema` |
+
 ```bash
-gh release download v0.1.0 --repo dev-prathap/ATTEST --pattern '*.mcpb'
-npx -y @smithery/cli mcp publish ./attest-0.1.0.mcpb -n attestlayer/attest \
-  --config-schema mcp/mcpb/config-schema.json          # needs a Smithery account
+gh release download v0.1.0 --repo dev-prathap/ATTEST --pattern '*.mcpb' --clobber
+npx -y @smithery/cli mcp publish ./attest-0.1.0-smithery.mcpb -n <your-namespace>/attest
 ```
+
+The namespace must already exist on smithery.ai (your username, or an org you created there).
+Build locally with `python mcp/mcpb/build.py`.
 
 The bundle runs `uvx attestlayer`, so it needs `uv` on the user's machine and never ships platform-specific
 wheels. Users who prefer no bundle can add the registry entry instead.

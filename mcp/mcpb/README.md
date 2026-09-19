@@ -12,9 +12,11 @@ Everything stays local: tokens are used in-process, the ledger is a SQLite file 
 Build it yourself:
 
 ```bash
-python mcp/mcpb/sync_tools.py                       # tools + config-schema.json from the real server
-npx @anthropic-ai/mcpb pack mcp/mcpb attest.mcpb
+python mcp/mcpb/build.py            # regenerates metadata, then packs both flavours
 ```
+
+Two files come out: `attest-<v>.mcpb` for Claude Desktop (MCPB tool shape) and `attest-<v>-smithery.mcpb`
+whose tools also carry `inputSchema`, which Smithery's validator requires and the MCPB CLI rejects.
 
 `config-schema.json` is the JSON Schema for the settings above; Smithery takes it with `--config-schema`
 because the MCPB manifest cannot carry one.
