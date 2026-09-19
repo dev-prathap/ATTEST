@@ -1,0 +1,20 @@
+# TLS + routing for Attest Cloud. Caddy gets certificates automatically.
+#   api.{$ATTEST_DOMAIN}  → the FastAPI service      app.{$ATTEST_DOMAIN}  → the dashboard
+{
+	email {$ATTEST_ACME_EMAIL}
+}
+
+api.{$ATTEST_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy api:8400
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+	}
+}
+
+app.{$ATTEST_DOMAIN} {
+	encode zstd gzip
+	reverse_proxy dashboard:3400
+}

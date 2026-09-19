@@ -67,16 +67,20 @@ indexed. **Cursor / other directories:** point at the MCP Registry entry.
 
 ## 3. Attest Cloud (API + dashboard)
 
-**Option A — one VPS with Docker Compose** (simplest; Hetzner / DigitalOcean / Lightsail):
+**Option A — one VPS, one command** (Hetzner / DigitalOcean / Lightsail, ~$6/mo). Point `api.` and `app.`
+A records at the host first, then:
 
 ```bash
-git clone https://github.com/dev-prathap/ATTEST && cd ATTEST/deploy
-cp .env.example .env    # PG_PASSWORD, ATTEST_CLOUD_BOOTSTRAP_TOKEN, ATTEST_CORS_ORIGINS=https://app.attestlayer.dev
-docker compose up -d    # Postgres 16 + API :8400 + dashboard :3400
+curl -fsSL https://raw.githubusercontent.com/dev-prathap/ATTEST/main/deploy/bootstrap.sh | \
+  ATTEST_DOMAIN=attestlayer.dev ATTEST_ACME_EMAIL=you@example.com bash
 ```
-Put Caddy / nginx in front with TLS: `api.attestlayer.dev → :8400`, `app.attestlayer.dev → :3400`.
-Nightly: `deploy/backup.sh /backups` (cron) and a checkpoint + anchor job:
-`curl -X POST api…/v1/ledger/checkpoint -H "Authorization: Bearer $ADMIN_KEY"`.
+
+It installs Docker, clones the repo to `/opt/attest`, generates secrets into `deploy/.env`, starts Postgres +
+API + dashboard behind Caddy (automatic TLS), and installs cron jobs for the nightly `pg_dump` and the daily
+ledger checkpoint. It then prints the `curl` that creates your first org.
+
+Manual equivalent: `cp .env.example .env` then
+`docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build`.
 
 **Option B — Fly.io**: `cd deploy && fly launch --copy-config` (sample `fly.toml`), `fly postgres create`,
 `fly secrets set DATABASE_URL=… ATTEST_CLOUD_BOOTSTRAP_TOKEN=… ATTEST_SIGNING_KEY=…`, `fly deploy`.

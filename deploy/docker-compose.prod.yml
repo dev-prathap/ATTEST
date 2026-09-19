@@ -1,0 +1,32 @@
+# Production overlay: TLS in front, no ports exposed directly.
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+services:
+  api:
+    ports: []
+    restart: unless-stopped
+    environment:
+      ATTEST_CORS_ORIGINS: "https://app.${ATTEST_DOMAIN}"
+      ATTEST_SIGNING_KEY: "${ATTEST_SIGNING_KEY:?set ATTEST_SIGNING_KEY}"
+      ATTEST_DASHBOARD_URL: "https://app.${ATTEST_DOMAIN}"
+  dashboard:
+    ports: []
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_ATTEST_CLOUD_URL: "https://api.${ATTEST_DOMAIN}"
+  db:
+    restart: unless-stopped
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      ATTEST_DOMAIN: "${ATTEST_DOMAIN:?set ATTEST_DOMAIN}"
+      ATTEST_ACME_EMAIL: "${ATTEST_ACME_EMAIL:?set ATTEST_ACME_EMAIL}"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on: [api, dashboard]
+volumes:
+  caddy-data:
+  caddy-config:
