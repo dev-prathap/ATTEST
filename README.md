@@ -1,5 +1,7 @@
 # Attest — Proof layer for AI agents
 
+[![ci](https://github.com/dev-prathap/ATTEST/actions/workflows/ci.yml/badge.svg)](https://github.com/dev-prathap/ATTEST/actions/workflows/ci.yml) [![npm](https://img.shields.io/npm/v/attestlayer?label=npm%20attestlayer)](https://www.npmjs.com/package/attestlayer) [![docs](https://img.shields.io/badge/docs-dev--prathap.github.io%2FATTEST-black)](https://dev-prathap.github.io/ATTEST/) [![license](https://img.shields.io/badge/license-MIT-green)](./LICENSE)
+
 > **Decide → Gate → Verify → Attest.**
 > When an AI agent takes an action in the real world, Attest decides whether it may, gates it behind a human when it matters, verifies from the system of record that it actually happened, and records tamper-evident evidence.
 
@@ -66,10 +68,10 @@ cd deploy && cp .env.example .env && docker compose up  # cloud + dashboard
 
 | where | how |
 | --- | --- |
-| PyPI | `pip install attestlayer` → `attest`, `attest-mcp`, `attest-mcp-server`, `attest-gateway`, `attestlayer` |
+| PyPI *(publishing pending)* | `pip install attestlayer` → `attest`, `attest-mcp`, `attest-mcp-server`, `attest-gateway`, `attestlayer` |
 | MCP Registry | `io.github.dev-prathap/attest` (verify server) · `io.github.dev-prathap/attest-proxy` (zero-code proxy) — `uvx attestlayer` |
 | Claude Desktop / Smithery | MCPB bundle from `mcp/mcpb` (`mcpb pack mcp/mcpb`) |
-| npm | `npm install attestlayer` |
+| npm | `npm install attestlayer` — **live** |
 | Docker | `ghcr.io/dev-prathap/attest-api`, `ghcr.io/dev-prathap/attest-dashboard` |
 
 <!-- mcp-name: io.github.dev-prathap/attest -->
