@@ -29,3 +29,16 @@ at = Attest(readers={"gmail": gmail_service_or_token, "slack": web_client_or_tok
 
 Readers accept the vendor SDK object (duck-typed, no vendor import), a bearer token (stdlib HTTP), or any
 `fetch(path, params)` callable. Every reader also accepts a `fetch(path, params)` callable, so any HTTP client (or a test double) works.
+
+## Live verification against real accounts
+
+`tests/live` proves the ladder against real Gmail, Slack, HubSpot, Notion and Linear — including the case that
+matters most: an action the API accepted whose record contradicts the intent must come back `unverified`.
+
+```bash
+export ATTEST_LIVE_GMAIL_TOKEN=…  ATTEST_LIVE_SLACK_TOKEN=…  ATTEST_LIVE_SLACK_CHANNEL=C…
+pytest tests/live -q --live-report        # only what you have credentials for; prints the ledger it produced
+```
+
+Each system has a positive test (record matches ⇒ `verified`) and a contradiction test (claim ≠ record ⇒
+`unverified`). Tokens stay in your shell: the suite reads back with the same token it writes with.
