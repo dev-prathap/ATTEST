@@ -16,7 +16,17 @@ jobs:
       - uses: astral-sh/setup-uv@v3
       - run: uv venv -p 3.12 && uv pip install -e ".[dev]" -e "./cloud[dev]" && .venv/bin/pytest -q && (cd cloud && ../.venv/bin/pytest -q)
       - run: uv build
-      - uses: pypa/gh-action-pypi-publish@release/v1      # trusted publisher: configure on pypi.org (see DEPLOY.md)
+      # Two supported paths (see DEPLOY.md §1):
+      #   a. Trusted publishing — nothing to configure here; add a pending publisher on pypi.org.
+      #   b. API token — add the repository secret PYPI_API_TOKEN; it takes precedence when present.
+      - name: Publish with an API token
+        if: ${{ secrets.PYPI_API_TOKEN != '' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: Publish with trusted publishing
+        if: ${{ secrets.PYPI_API_TOKEN == '' }}
+        uses: pypa/gh-action-pypi-publish@release/v1
   npm:
     runs-on: ubuntu-latest
     steps:

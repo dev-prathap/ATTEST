@@ -8,12 +8,32 @@ docs at **https://dev-prathap.github.io/ATTEST/**. Everything ships from one git
 
 | what | where | why |
 | --- | --- | --- |
-| PyPI project `attestlayer` | pypi.org → Your projects → *Publishing* → add **trusted publisher**: owner `dev-prathap`, repo `ATTEST`, workflow `release.yml`, environment `pypi` | no API token to leak; the release workflow publishes via OIDC |
-| GitHub environment `pypi` | repo → Settings → Environments → New: `pypi` | required by the trusted publisher |
+| PyPI — **either** a pending publisher **or** a token | see below | publishes the Python SDK |
+| GitHub environment `pypi` | repo → Settings → Environments → New: `pypi` | required by the trusted publisher path |
 | npm org `attestlayer` | npmjs.com → create org `attestlayer` (free, public) → Access token (Automation) | `attestlayer` |
 | GitHub secret `NPM_TOKEN` | repo → Settings → Secrets → Actions | npm publish with provenance |
 | GitHub Pages | repo → Settings → Pages → Source: **GitHub Actions** | docs site |
 | Domain `attestlayer.dev` (or .io/.ai) | any registrar | `app.` dashboard, `api.` cloud, `docs.` (CNAME to Pages, optional) |
+
+### PyPI: pick one path
+
+**a. Trusted publishing (recommended — no token anywhere).** The project does not exist on PyPI yet, so add a
+*pending* publisher: pypi.org → **Publishing** (left sidebar) → "Add a new pending publisher":
+
+| field | value |
+| --- | --- |
+| PyPI Project Name | `attestlayer` |
+| Owner | `dev-prathap` |
+| Repository name | `ATTEST` |
+| Workflow name | `release.yml` |
+| Environment name | `pypi` |
+
+Then create the `pypi` environment in the repo (Settings → Environments → New environment). Nothing else.
+
+**b. API token.** pypi.org → Account settings → Add API token (scope: entire account, until the project exists)
+→ `gh secret set PYPI_API_TOKEN --repo dev-prathap/ATTEST`. The workflow uses the secret when it is present and
+falls back to trusted publishing when it is not. After the first release, replace it with a project-scoped token
+or switch to path (a) and delete the secret.
 
 ## 1. Release the SDKs, MCP server and images
 
