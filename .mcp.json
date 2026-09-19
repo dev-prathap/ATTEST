@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "shadcn": {
+      "command": "npx",
+      "args": ["shadcn@latest", "mcp"]
+    },
+    "attest": {
+      "command": "uvx",
+      "args": ["attestlayer"],
+      "env": {
+        "ATTEST_LEDGER": ".attest/ledger.sqlite",
+        "ATTEST_POLICY": "attest.yaml"
+      }
+    }
+  }
+}
