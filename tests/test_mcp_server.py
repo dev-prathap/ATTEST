@@ -83,3 +83,44 @@ def test_stdio_roundtrip(tmp_path):
     assert text(resps[3]["result"])["level"] == "acknowledged"
     assert resps[4]["error"]["code"] == -32601
     assert SqliteLedger(tmp_path / "l.sqlite").count() == 1
+
+
+def test_every_tool_declares_all_four_behaviour_hints():
+    """Hosts warn a user from these, and directories reject tools that omit them. A missing hint is
+    not a neutral default: it leaves the host guessing about a tool that may write or reach out."""
+    required = ("readOnlyHint", "destructiveHint", "idempotentHint", "openWorldHint")
+    for t in TOOLS:
+        ann = t.get("annotations")
+        assert ann, f"{t['name']} declares no annotations"
+        assert ann.get("title"), f"{t['name']} has no title"
+        for hint in required:
+            assert isinstance(ann.get(hint), bool), f"{t['name']}.{hint} must be an explicit bool"
+
+
+def test_hints_match_what_the_handlers_actually_do():
+    """The honesty rule applied to our own metadata: a tool that writes must not claim readOnly, and
+    one that touches a third-party system must admit openWorld."""
+    by_name = {t["name"]: t["annotations"] for t in TOOLS}
+
+    # attest_confirm creates a pending request and notifies Slack / a webhook.
+    assert by_name["attest_confirm"]["readOnlyHint"] is False
+    assert by_name["attest_confirm"]["openWorldHint"] is True
+    # attest_record appends a ledger row.
+    assert by_name["attest_record"]["readOnlyHint"] is False
+    # attest_verify reads the third-party system of record and writes nothing.
+    assert by_name["attest_verify"]["readOnlyHint"] is True
+    assert by_name["attest_verify"]["openWorldHint"] is True
+    # Pure reads stay closed and repeatable.
+    for name in ("attest_decide", "attest_confirm_status", "attest_ledger"):
+        assert by_name[name]["readOnlyHint"] is True
+        assert by_name[name]["idempotentHint"] is True
+        assert by_name[name]["openWorldHint"] is False
+    # The ledger is append-only and confirmations are superseded, never deleted.
+    assert all(a["destructiveHint"] is False for a in by_name.values())
+
+
+def test_tools_list_response_carries_the_annotations():
+    srv = Server(Attest(ledger=SqliteLedger(":memory:"), gate=AutoGate("approved")))
+    res = srv.handle({"jsonrpc": "2.0", "id": 1, "method": "tools/list", "params": {}})
+    tools = res["result"]["tools"]
+    assert tools and all("annotations" in t for t in tools)

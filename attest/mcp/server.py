@@ -39,30 +39,53 @@ _DESC = {"type": "object", "properties": {
     "required": ["system", "verb"]}
 _P = _DESC["properties"]
 
+def _hints(*, read_only: bool, idempotent: bool, open_world: bool, title: str) -> dict[str, Any]:
+    """MCP behaviour hints, which hosts use to warn a user before a call.
+
+    They must describe what the handler actually does. A tool that writes never advertises
+    `readOnlyHint`, and a tool that touches a third-party system admits `openWorldHint`. Nothing here
+    destroys data — the ledger is append-only and confirmations are superseded, never deleted — so
+    `destructiveHint` is false throughout. Hints are advisory and untrusted by hosts; they are a
+    courtesy to the user, not a security boundary.
+    """
+    return {"title": title, "readOnlyHint": read_only, "destructiveHint": False,
+            "idempotentHint": idempotent, "openWorldHint": open_world}
+
+
 TOOLS = [
     {"name": "attest_decide", "description": "Evaluate an action against the Attest policy before doing it. Returns "
-     "decision (act|ask|refuse), risk_tier, reasons, target_class.", "inputSchema": _DESC},
+     "decision (act|ask|refuse), risk_tier, reasons, target_class.", "inputSchema": _DESC,
+     # Evaluates the local policy and returns a verdict. Touches nothing.
+     "annotations": _hints(read_only=True, idempotent=True, open_world=False, title="Decide on an action")},
     {"name": "attest_confirm", "description": "Ask a human to confirm an action (web inbox / Slack / webhook). With "
      "wait=true blocks until decided (timeout_s); otherwise returns a request id to poll with attest_confirm_status.",
      "inputSchema": {"type": "object", "properties": {**_P, "reasons": {"type": "array", "items": {"type": "string"}},
                                                       "wait": {"type": "boolean"}, "timeout_s": {"type": "number"}},
-                     "required": ["system", "verb"]}},
+                     "required": ["system", "verb"]},
+     # Creates a pending request and notifies Slack or a webhook. Every call makes a new request.
+     "annotations": _hints(read_only=False, idempotent=False, open_world=True, title="Ask a human to confirm")},
     {"name": "attest_confirm_status", "description": "Status of a confirm request (id or resume token).",
-     "inputSchema": {"type": "object", "properties": {"request_id": {"type": "string"}}, "required": ["request_id"]}},
+     "inputSchema": {"type": "object", "properties": {"request_id": {"type": "string"}}, "required": ["request_id"]},
+     "annotations": _hints(read_only=True, idempotent=True, open_world=False, title="Confirmation status")},
     {"name": "attest_record", "description": "Record an action that already happened. Pass the tool's result for an "
      "acknowledged/attested-only level, or verified=true/false with evidence.",
      "inputSchema": {"type": "object", "properties": {**_P, "result": {}, "verified": {"type": "boolean"},
                                                       "evidence": {"type": "object"}, "error": {"type": "string"}},
-                     "required": ["system", "verb"]}},
+                     "required": ["system", "verb"]},
+     # Appends one row to your own ledger, so the domain stays closed even when that ledger is hosted.
+     "annotations": _hints(read_only=False, idempotent=False, open_world=False, title="Record an action")},
     {"name": "attest_verify", "description": "Read back an action from the system of record with the configured "
      "credentials and compare it with the intent. Returns level (verified|acknowledged|unverified|…) and evidence.",
      "inputSchema": {"type": "object", "properties": {**_P, "result": {}},
-                     "required": ["system", "verb", "result"]}},
+                     "required": ["system", "verb", "result"]},
+     # Reads from the third-party system of record and writes nothing, here or there.
+     "annotations": _hints(read_only=True, idempotent=True, open_world=True, title="Verify against the source")},
     {"name": "attest_ledger",
      "description": "Query the ledger: last N entries, filtered by run_id / level; verify the chain.",
      "inputSchema": {"type": "object", "properties": {"limit": {"type": "integer"}, "run_id": {"type": "string"},
                                                       "level": {"type": "string"},
-                                                      "verify_chain": {"type": "boolean"}}}},
+                                                      "verify_chain": {"type": "boolean"}}},
+     "annotations": _hints(read_only=True, idempotent=True, open_world=False, title="Query the ledger")},
 ]
 
 
