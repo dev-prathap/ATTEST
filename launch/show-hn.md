@@ -1,8 +1,14 @@
 # Show HN draft
 
-**Before posting:** ☐ `pytest tests/live --live-report` green (then delete the caveat paragraph) ·
-☐ links open in a private window · ☐ you are free for the next three hours to answer comments
-**Best window:** weekday, 8–10am US Eastern.
+**Before posting:** ☐ `pytest tests/live --live-report` green (then delete the caveat paragraph from
+[show-hn-comment.txt](./show-hn-comment.txt)) · ☐ links open in a private window · ☐ you are free for the next
+three hours to answer comments
+**Best window:** weekday, 8–10am US Eastern (5:30–7:30pm IST), Monday to Wednesday.
+
+**How to post:** submit the title and URL below at news.ycombinator.com/submit, leave the text field empty —
+HN ignores it when a URL is given — then immediately paste [show-hn-comment.txt](./show-hn-comment.txt) as the
+first comment on your own post. That file is plain text on purpose: HN renders no Markdown, and joins lines
+within a paragraph, so bullets and bold from the draft below would collapse into a wall of text.
 
 ---
 

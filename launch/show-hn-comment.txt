@@ -1,0 +1,41 @@
+Hi HN. I'm Prathap. Every agent framework makes it easy to give an agent tools. None of them answers the question a company asks before letting agents act: did it actually happen, and can we prove it?
+
+"The API returned 200" is not proof. A 200 from a mail API doesn't mean the mail reached the right recipient. A 200 from a CRM doesn't mean the field holds the value you intended. Teams find the gap in an incident, an audit, or a customer complaint.
+
+Attest is a small layer around the action.
+
+Decide: a policy engine returns act / ask / refuse with a risk tier and reasons. Recipients are classified internal / known / external; deletes and payments ask; unknown writes ask.
+
+Gate: risky actions wait for a human where the team already works. A Slack card, a web inbox, a webhook, email, Teams, or the framework's own pause (LangGraph interrupt, MCP pending + resume token).
+
+Verify: after your tool runs, Attest reads back from the system of record with your credentials and compares intent with what is actually there. The result is a level, never a boolean: verified / verified-custom / acknowledged / attested-only / unverified. That last one means the API said yes and the record disagrees.
+
+Attest: one hash-chained ledger row per action. Params and results are stored as hashes plus an allow-listed preview, never bodies.
+
+It never executes anything. That is why it works with any stack on day one, and why it owes no connectors:
+
+  @attest.action(system="gmail", verb="send", target="to")
+  def send_email(to, subject, body): ...
+
+Your code still runs the action. Attest decides, gates, reads back and records around it.
+
+Here is what that buys you. Two identical CRM writes, both reported successful by the tool, both approved by a human:
+
+  #2  someweirdcrm.create -> leads   ask  approved  unverified
+  #1  someweirdcrm.create -> leads   ask  approved  verified
+
+The second read back clean. The first did not, and the row says which field disagreed: want "qualified", got "new". A trace would have shown two green steps.
+
+Also in the box: LangGraph, OpenAI Agents, Claude Agent SDK and CrewAI wrappers; a TypeScript SDK with Vercel AI SDK, LangChain.js and Mastra adapters; an HTTP gateway you point a base URL at; and a zero-code MCP proxy, where attest-mcp --upstream <your server> verifies create_issue by calling get_issue. An app it has never seen (POST api.someweirdcrm.io/v2/leads) is still recorded, decided, gated, and verified via GET /v2/leads/{id}.
+
+Two design choices I would defend.
+
+1. Levels, not booleans. A check that cannot run (network error, missing id, no recipe) degrades to acknowledged, with the error in the evidence. Only a contradiction is unverified. A read-back that finds the record but has nothing comparable is acknowledged with exists: true, never verified. The ledger never claims more than it checked.
+
+2. Nothing leaves your process. Read-back uses the credential the agent already holds. The hosted option stores hashes and previews; vendor tokens never reach it.
+
+Install: pip install attestlayer, or npm install attestlayer. On the MCP registry as io.github.dev-prathap/attest, on Smithery as attestlayer/attest. Docs: https://dev-prathap.github.io/ATTEST/
+
+(One caveat while it is still true: the recipes are covered by tests against client-shaped fakes, and the ledger's tamper behaviour is tested directly, but the live-account suite has not yet been run against production Gmail, Slack or HubSpot. I would rather say that than imply otherwise.)
+
+MIT. What I would like feedback on: the honesty rules above, which read-back recipes you would want next, and whether the MCP proxy fits how you actually run agents.
